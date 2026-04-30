@@ -8,10 +8,17 @@
                 </p>
             </div>
 
-            <a href="{{ route('owner.dashboard') }}"
-               class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                Back to Dashboard
-            </a>
+            <div class="flex gap-2">
+                <a href="{{ route('owner.reports.sales.export', request()->query()) }}"
+                class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
+                    Export CSV
+                </a>
+
+                <a href="{{ route('owner.dashboard') }}"
+                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                    Back to Dashboard
+                </a>
+            </div>
         </div>
 
         <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">

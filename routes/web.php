@@ -117,8 +117,18 @@ Route::middleware(['auth', 'role:owner|admin'])
     ->name('owner.')
     ->group(function () {
         Route::get('/dashboard', [ReportController::class, 'dashboard'])->name('dashboard');
+
         Route::get('/reports/sales', [ReportController::class, 'sales'])->name('reports.sales');
+        Route::get('/reports/sales/export', [ReportController::class, 'exportSales'])->name('reports.sales.export');
+
         Route::get('/reports/profit', [ReportController::class, 'profit'])->name('reports.profit');
+        Route::get('/reports/profit/export', [ReportController::class, 'exportProfit'])->name('reports.profit.export');
+
+        Route::get('/reports/stock', [ReportController::class, 'stock'])->name('reports.stock');
+        Route::get('/reports/stock/export', [ReportController::class, 'exportStock'])->name('reports.stock.export');
+
+        Route::get('/reports/purchases', [ReportController::class, 'purchases'])->name('reports.purchases');
+        Route::get('/reports/purchases/export', [ReportController::class, 'exportPurchases'])->name('reports.purchases.export');
     });
 
 Route::middleware(['auth', 'role:cashier'])
