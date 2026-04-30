@@ -1,6 +1,16 @@
-<x-layouts.app>
-    <div class="p-6">
-        <h1 class="text-2xl font-bold">Warehouse Dashboard</h1>
-        <p class="mt-2 text-gray-600">Kelola stok, produk, dan barang masuk.</p>
+<x-layouts.app :title="__('Warehouse Dashboard')">
+    <div class="p-6 space-y-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Warehouse Dashboard</h1>
+            <p class="mt-2 text-gray-600">Kelola stok, produk, dan barang masuk.</p>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <a href="{{ route('admin.categories.index') }}"
+               class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:bg-gray-50">
+                <h2 class="font-semibold text-gray-900">Categories</h2>
+                <p class="mt-1 text-sm text-gray-600">Kelola kategori produk.</p>
+            </a>
+        </div>
     </div>
 </x-layouts.app>
