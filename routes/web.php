@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\StockMovementController;
 use App\Http\Controllers\Cashier\PosController;
 use App\Http\Controllers\Cashier\SaleController;
 use App\Http\Controllers\Cashier\SaleRefundController;
+use App\Http\Controllers\Admin\PurchaseController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -72,6 +73,11 @@ Route::middleware(['auth', 'role:admin|warehouse staff'])
 
         Route::post('stock-adjustments', [StockAdjustmentController::class, 'store'])
             ->name('stock-adjustments.store');
+
+        Route::get('purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+        Route::get('purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');
+        Route::post('purchases', [PurchaseController::class, 'store'])->name('purchases.store');
+        Route::get('purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
     });
 
 Route::middleware(['auth', 'role:cashier|admin'])

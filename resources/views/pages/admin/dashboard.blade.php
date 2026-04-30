@@ -48,6 +48,12 @@
                 <h2 class="font-semibold text-gray-900">Stock Adjustment</h2>
                 <p class="mt-1 text-sm text-gray-600">Tambah atau kurangi stok manual.</p>
             </a>
+
+            <a href="{{ route('admin.purchases.index') }}"
+            class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:bg-gray-50">
+                <h2 class="font-semibold text-gray-900">Purchases</h2>
+                <p class="mt-1 text-sm text-gray-600">Input dan lihat barang masuk supplier.</p>
+            </a>
         </div>
     </div>
 </x-layouts.app>
