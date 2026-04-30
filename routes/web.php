@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\UnitController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -49,6 +50,7 @@ Route::middleware(['auth', 'role:admin|warehouse staff'])
     ->name('admin.')
     ->group(function () {
         Route::resource('categories', CategoryController::class)->except(['show']);
+        Route::resource('units', UnitController::class)->except(['show']);
     });
 
 // Route untuk masing-masing role
