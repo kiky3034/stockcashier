@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\StockAdjustmentController;
 use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Admin\StockMovementController;
+use App\Http\Controllers\Cashier\PosController;
+use App\Http\Controllers\Cashier\SaleController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -69,6 +71,17 @@ Route::middleware(['auth', 'role:admin|warehouse staff'])
 
         Route::post('stock-adjustments', [StockAdjustmentController::class, 'store'])
             ->name('stock-adjustments.store');
+    });
+
+Route::middleware(['auth', 'role:cashier|admin'])
+    ->prefix('cashier')
+    ->name('cashier.')
+    ->group(function () {
+        Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
+        Route::post('/pos', [PosController::class, 'store'])->name('pos.store');
+
+        Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
+        Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
     });
 
 // Route untuk masing-masing role

@@ -58,4 +58,9 @@ class Product extends Model
     {
         return (float) $this->stocks()->sum('quantity');
     }
+
+    public function saleItems(): HasMany
+    {
+        return $this->hasMany(SaleItem::class);
+    }
 }
