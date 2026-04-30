@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use App\Models\SaleRefund;
+use App\Models\SaleRefundItem;
 
 class SaleService
 {
@@ -163,6 +165,51 @@ class SaleService
         return 'INV-' . $date . '-' . str_pad((string) $countToday, 5, '0', STR_PAD_LEFT);
     }
 
+    private function generateRefundNumber(): string
+    {
+        $date = now()->format('Ymd');
+
+        $countToday = SaleRefund::query()
+            ->whereDate('refunded_at', now()->toDateString())
+            ->count() + 1;
+
+        return 'RFN-' . $date . '-' . str_pad((string) $countToday, 5, '0', STR_PAD_LEFT);
+    }
+
+    private function updateSaleRefundStatus(Sale $sale): void
+    {
+        $sale->load(['items.refundItems']);
+
+        $allItemsFullyRefunded = true;
+        $hasRefund = false;
+
+        foreach ($sale->items as $item) {
+            $refundedQuantity = (float) $item->refundItems()->sum('quantity');
+
+            if ($refundedQuantity > 0) {
+                $hasRefund = true;
+            }
+
+            if ($refundedQuantity < (float) $item->quantity) {
+                $allItemsFullyRefunded = false;
+            }
+        }
+
+        if ($allItemsFullyRefunded) {
+            $sale->update([
+                'status' => 'refunded',
+            ]);
+
+            return;
+        }
+
+        if ($hasRefund) {
+            $sale->update([
+                'status' => 'partially_refunded',
+            ]);
+        }
+    }
+
     public function voidSale(Sale $sale, User $user, ?string $reason = null): Sale
     {
         return DB::transaction(function () use ($sale, $user, $reason) {
@@ -208,6 +255,137 @@ class SaleService
             ]);
 
             return $sale->load(['items', 'payments', 'cashier', 'warehouse']);
+        });
+    }
+
+    public function refundSale(Sale $sale, array $data, User $user): SaleRefund
+    {
+        return DB::transaction(function () use ($sale, $data, $user) {
+            $sale = Sale::query()
+                ->whereKey($sale->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($sale->status === 'voided') {
+                throw ValidationException::withMessages([
+                    'sale' => 'Transaksi voided tidak bisa direfund.',
+                ]);
+            }
+
+            if ($sale->status === 'refunded') {
+                throw ValidationException::withMessages([
+                    'sale' => 'Transaksi ini sudah direfund penuh.',
+                ]);
+            }
+
+            $sale->load(['items.product', 'warehouse']);
+
+            $items = collect($data['items'] ?? [])
+                ->filter(fn ($item) => isset($item['sale_item_id'], $item['quantity']))
+                ->map(function ($item) {
+                    return [
+                        'sale_item_id' => (int) $item['sale_item_id'],
+                        'quantity' => (float) $item['quantity'],
+                    ];
+                })
+                ->filter(fn ($item) => $item['quantity'] > 0)
+                ->values();
+
+            if ($items->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'items' => 'Minimal pilih 1 item untuk refund.',
+                ]);
+            }
+
+            $saleItemIds = $items->pluck('sale_item_id')->unique();
+
+            $saleItems = SaleItem::query()
+                ->with(['product', 'refundItems'])
+                ->where('sale_id', $sale->id)
+                ->whereIn('id', $saleItemIds)
+                ->get()
+                ->keyBy('id');
+
+            if ($saleItems->count() !== $saleItemIds->count()) {
+                throw ValidationException::withMessages([
+                    'items' => 'Ada item refund yang tidak valid.',
+                ]);
+            }
+
+            $preparedItems = [];
+            $totalRefund = 0;
+
+            foreach ($items as $item) {
+                /** @var SaleItem $saleItem */
+                $saleItem = $saleItems[$item['sale_item_id']];
+
+                $alreadyRefunded = (float) $saleItem->refundItems()->sum('quantity');
+                $refundableQuantity = max((float) $saleItem->quantity - $alreadyRefunded, 0);
+                $refundQuantity = (float) $item['quantity'];
+
+                if ($refundQuantity > $refundableQuantity) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Quantity refund untuk produk ' . $saleItem->product_name . ' melebihi sisa quantity yang bisa direfund.',
+                    ]);
+                }
+
+                $subtotal = $refundQuantity * (float) $saleItem->unit_price;
+                $totalRefund += $subtotal;
+
+                $preparedItems[] = [
+                    'sale_item' => $saleItem,
+                    'product' => $saleItem->product,
+                    'quantity' => $refundQuantity,
+                    'unit_price' => (float) $saleItem->unit_price,
+                    'subtotal' => $subtotal,
+                ];
+            }
+
+            $refund = SaleRefund::create([
+                'refund_number' => $this->generateRefundNumber(),
+                'sale_id' => $sale->id,
+                'user_id' => $user->id,
+                'total_amount' => $totalRefund,
+                'method' => $data['method'],
+                'status' => 'completed',
+                'reason' => $data['reason'] ?? null,
+                'refunded_at' => now(),
+            ]);
+
+            foreach ($preparedItems as $preparedItem) {
+                /** @var SaleItem $saleItem */
+                $saleItem = $preparedItem['sale_item'];
+                $product = $preparedItem['product'];
+
+                SaleRefundItem::create([
+                    'sale_refund_id' => $refund->id,
+                    'sale_item_id' => $saleItem->id,
+                    'product_id' => $product->id,
+                    'product_name' => $saleItem->product_name,
+                    'sku' => $saleItem->sku,
+                    'unit_name' => $saleItem->unit_name,
+                    'quantity' => $preparedItem['quantity'],
+                    'unit_price' => $preparedItem['unit_price'],
+                    'subtotal' => $preparedItem['subtotal'],
+                ]);
+
+                if ($product && $product->track_stock) {
+                    $this->stockService->increase(
+                        product: $product,
+                        warehouse: $sale->warehouse,
+                        quantity: $preparedItem['quantity'],
+                        type: 'sale_refund',
+                        user: $user,
+                        notes: 'Refund invoice ' . $sale->invoice_number . ' / ' . $refund->refund_number,
+                        referenceType: SaleRefund::class,
+                        referenceId: $refund->id,
+                    );
+                }
+            }
+
+            $this->updateSaleRefundStatus($sale);
+
+            return $refund->load(['sale', 'items.product', 'user']);
         });
     }
 }

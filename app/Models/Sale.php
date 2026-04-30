@@ -54,4 +54,9 @@ class Sale extends Model
     {
         return $this->hasMany(SalePayment::class);
     }
+
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(SaleRefund::class);
+    }
 }

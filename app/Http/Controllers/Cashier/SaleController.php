@@ -39,7 +39,7 @@ class SaleController extends Controller
             abort_if($sale->cashier_id !== $request->user()->id, 403);
         }
 
-        $sale->load(['items.product', 'payments', 'cashier', 'warehouse']);
+        $sale->load(['items.product', 'items.refundItems', 'payments', 'refunds.user', 'cashier', 'warehouse']);
 
         return view('pages.cashier.sales.show', [
             'sale' => $sale,

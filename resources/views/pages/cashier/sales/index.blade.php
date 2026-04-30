@@ -85,6 +85,14 @@
                                         <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
                                             Completed
                                         </span>
+                                    @elseif ($sale->status === 'partially_refunded')
+                                        <span class="rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-700">
+                                            Partial Refund
+                                        </span>
+                                    @elseif ($sale->status === 'refunded')
+                                        <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+                                            Refunded
+                                        </span>
                                     @elseif ($sale->status === 'voided')
                                         <span class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
                                             Voided

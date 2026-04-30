@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Admin\StockMovementController;
 use App\Http\Controllers\Cashier\PosController;
 use App\Http\Controllers\Cashier\SaleController;
+use App\Http\Controllers\Cashier\SaleRefundController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -83,6 +84,16 @@ Route::middleware(['auth', 'role:cashier|admin'])
         Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
         Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
         Route::patch('/sales/{sale}/void', [SaleController::class, 'void'])->name('sales.void');
+
+        Route::get('/sales/{sale}/refund', [SaleRefundController::class, 'create'])
+            ->name('sales.refunds.create');
+
+        Route::post('/sales/{sale}/refund', [SaleRefundController::class, 'store'])
+            ->name('sales.refunds.store');
+
+        Route::get('/refunds/{refund}', [SaleRefundController::class, 'show'])
+            ->name('refunds.show');
+
         Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
     });
 
