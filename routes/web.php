@@ -14,6 +14,7 @@ use App\Http\Controllers\Cashier\PosController;
 use App\Http\Controllers\Cashier\SaleController;
 use App\Http\Controllers\Cashier\SaleRefundController;
 use App\Http\Controllers\Admin\PurchaseController;
+use App\Http\Controllers\Owner\ReportController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -111,11 +112,13 @@ Route::middleware(['auth', 'role:admin'])
         Route::view('/dashboard', 'pages.admin.dashboard')->name('dashboard');
     });
 
-Route::middleware(['auth', 'role:owner'])
+Route::middleware(['auth', 'role:owner|admin'])
     ->prefix('owner')
     ->name('owner.')
     ->group(function () {
-        Route::view('/dashboard', 'pages.owner.dashboard')->name('dashboard');
+        Route::get('/dashboard', [ReportController::class, 'dashboard'])->name('dashboard');
+        Route::get('/reports/sales', [ReportController::class, 'sales'])->name('reports.sales');
+        Route::get('/reports/profit', [ReportController::class, 'profit'])->name('reports.profit');
     });
 
 Route::middleware(['auth', 'role:cashier'])
