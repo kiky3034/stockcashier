@@ -162,4 +162,52 @@ class SaleService
 
         return 'INV-' . $date . '-' . str_pad((string) $countToday, 5, '0', STR_PAD_LEFT);
     }
+
+    public function voidSale(Sale $sale, User $user, ?string $reason = null): Sale
+    {
+        return DB::transaction(function () use ($sale, $user, $reason) {
+            $sale = Sale::query()
+                ->whereKey($sale->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($sale->status !== 'completed') {
+                throw ValidationException::withMessages([
+                    'sale' => 'Transaksi ini tidak bisa di-void karena statusnya bukan completed.',
+                ]);
+            }
+
+            $sale->load(['items.product', 'warehouse']);
+
+            foreach ($sale->items as $item) {
+                $product = $item->product;
+
+                if ($product && $product->track_stock) {
+                    $this->stockService->increase(
+                        product: $product,
+                        warehouse: $sale->warehouse,
+                        quantity: (float) $item->quantity,
+                        type: 'sale_void',
+                        user: $user,
+                        notes: 'Void sale invoice ' . $sale->invoice_number . ($reason ? ' - ' . $reason : ''),
+                        referenceType: Sale::class,
+                        referenceId: $sale->id,
+                    );
+                }
+            }
+
+            $voidNote = 'VOID by ' . $user->name . ' at ' . now()->format('Y-m-d H:i:s');
+
+            if ($reason) {
+                $voidNote .= ' - Reason: ' . $reason;
+            }
+
+            $sale->update([
+                'status' => 'voided',
+                'notes' => trim(($sale->notes ? $sale->notes . "\n" : '') . $voidNote),
+            ]);
+
+            return $sale->load(['items', 'payments', 'cashier', 'warehouse']);
+        });
+    }
 }

@@ -81,9 +81,19 @@
                                 </td>
 
                                 <td class="px-4 py-3">
-                                    <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-                                        {{ ucfirst($sale->status) }}
-                                    </span>
+                                    @if ($sale->status === 'completed')
+                                        <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                                            Completed
+                                        </span>
+                                    @elseif ($sale->status === 'voided')
+                                        <span class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+                                            Voided
+                                        </span>
+                                    @else
+                                        <span class="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                                            {{ ucfirst($sale->status) }}
+                                        </span>
+                                    @endif
                                 </td>
 
                                 <td class="px-4 py-3 text-right">

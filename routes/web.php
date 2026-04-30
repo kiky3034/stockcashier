@@ -81,6 +81,8 @@ Route::middleware(['auth', 'role:cashier|admin'])
         Route::post('/pos', [PosController::class, 'store'])->name('pos.store');
 
         Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
+        Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
+        Route::patch('/sales/{sale}/void', [SaleController::class, 'void'])->name('sales.void');
         Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
     });
 

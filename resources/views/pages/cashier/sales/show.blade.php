@@ -12,6 +12,12 @@
                 </div>
 
                 <div class="flex gap-2">
+                    <a href="{{ route('cashier.sales.receipt', $sale) }}"
+                    target="_blank"
+                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        Print Receipt
+                    </a>
+
                     <a href="{{ route('cashier.pos.index') }}"
                        class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
                         New Sale
@@ -43,7 +49,13 @@
 
                 <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                     <div class="text-sm text-gray-500">Status</div>
-                    <div class="mt-1 font-semibold text-gray-900">{{ ucfirst($sale->status) }}</div>
+                    @if ($sale->status === 'completed')
+                        <div class="mt-1 font-semibold text-green-700">Completed</div>
+                    @elseif ($sale->status === 'voided')
+                        <div class="mt-1 font-semibold text-red-700">Voided</div>
+                    @else
+                        <div class="mt-1 font-semibold text-gray-900">{{ ucfirst($sale->status) }}</div>
+                    @endif
                 </div>
             </div>
 
@@ -164,6 +176,45 @@
                     </div>
                 </div>
             </div>
+
+            {{-- FORM VOID TRANSACTION --}}
+            @if ($sale->status === 'completed')
+                <div class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
+                    <h2 class="font-semibold text-red-900">Void Transaction</h2>
+                    <p class="mt-1 text-sm text-red-700">
+                        Void akan membatalkan transaksi ini dan mengembalikan stok produk.
+                    </p>
+
+                    <form method="POST"
+                          action="{{ route('cashier.sales.void', $sale) }}"
+                          class="mt-4 space-y-3"
+                          onsubmit="return confirm('Yakin ingin void transaksi ini? Stok akan dikembalikan.')">
+                        @csrf
+                        @method('PATCH')
+
+                        <div>
+                            <label for="reason" class="block text-sm font-medium text-red-900">
+                                Reason
+                            </label>
+
+                            <textarea id="reason"
+                                      name="reason"
+                                      rows="3"
+                                      placeholder="Contoh: Salah input barang / customer batal"
+                                      class="mt-1 w-full rounded-lg border-red-300 text-sm focus:border-red-700 focus:ring-red-700">{{ old('reason') }}</textarea>
+
+                            @error('reason')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <button type="submit"
+                                class="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">
+                            Void Transaction
+                        </button>
+                    </form>
+                </div>
+            @endif
 
             @if ($sale->notes)
                 <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
