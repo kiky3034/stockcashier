@@ -15,6 +15,8 @@ use App\Http\Controllers\Cashier\SaleController;
 use App\Http\Controllers\Cashier\SaleRefundController;
 use App\Http\Controllers\Admin\PurchaseController;
 use App\Http\Controllers\Owner\ReportController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\ActivityLogController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -110,6 +112,9 @@ Route::middleware(['auth', 'role:admin'])
     ->name('admin.')
     ->group(function () {
         Route::view('/dashboard', 'pages.admin.dashboard')->name('dashboard');
+        Route::resource('users', UserController::class)->except(['show']);
+        Route::get('activity-logs', [ActivityLogController::class, 'index'])
+            ->name('activity-logs.index');
     });
 
 Route::middleware(['auth', 'role:owner|admin'])
