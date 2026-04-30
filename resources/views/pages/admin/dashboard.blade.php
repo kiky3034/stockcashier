@@ -21,6 +21,11 @@
                 <h2 class="font-semibold text-gray-900">Suppliers</h2>
                 <p class="mt-1 text-sm text-gray-600">Kelola data supplier.</p>
             </a>
+            <a href="{{ route('admin.warehouses.index') }}"
+            class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:bg-gray-50">
+                <h2 class="font-semibold text-gray-900">Warehouses</h2>
+                <p class="mt-1 text-sm text-gray-600">Kelola lokasi stok.</p>
+            </a>
         </div>
     </div>
 </x-layouts.app>
