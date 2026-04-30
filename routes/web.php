@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\WarehouseController;
+use App\Http\Controllers\Admin\ProductController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -55,6 +56,7 @@ Route::middleware(['auth', 'role:admin|warehouse staff'])
         Route::resource('units', UnitController::class)->except(['show']);
         Route::resource('suppliers', SupplierController::class)->except(['show']);
         Route::resource('warehouses', WarehouseController::class)->except(['show']);
+        Route::resource('products', ProductController::class)->except(['show']);
     });
 
 // Route untuk masing-masing role
