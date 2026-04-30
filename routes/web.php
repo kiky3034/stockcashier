@@ -7,6 +7,9 @@ use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\WarehouseController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\StockAdjustmentController;
+use App\Http\Controllers\Admin\StockController;
+use App\Http\Controllers\Admin\StockMovementController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -57,6 +60,15 @@ Route::middleware(['auth', 'role:admin|warehouse staff'])
         Route::resource('suppliers', SupplierController::class)->except(['show']);
         Route::resource('warehouses', WarehouseController::class)->except(['show']);
         Route::resource('products', ProductController::class)->except(['show']);
+
+        Route::get('stocks', [StockController::class, 'index'])->name('stocks.index');
+        Route::get('stock-movements', [StockMovementController::class, 'index'])->name('stock-movements.index');
+
+        Route::get('stock-adjustments/create', [StockAdjustmentController::class, 'create'])
+            ->name('stock-adjustments.create');
+
+        Route::post('stock-adjustments', [StockAdjustmentController::class, 'store'])
+            ->name('stock-adjustments.store');
     });
 
 // Route untuk masing-masing role

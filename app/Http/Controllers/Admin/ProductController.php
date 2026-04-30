@@ -9,6 +9,7 @@ use App\Models\Stock;
 use App\Models\Supplier;
 use App\Models\Unit;
 use App\Models\Warehouse;
+use App\Models\StockMovement;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -97,11 +98,26 @@ class ProductController extends Controller
             $stockInputs = $validated['stocks'] ?? [];
 
             foreach ($warehouses as $warehouse) {
+                $quantity = $trackStock ? (float) ($stockInputs[$warehouse->id] ?? 0) : 0;
+
                 Stock::create([
                     'product_id' => $product->id,
                     'warehouse_id' => $warehouse->id,
-                    'quantity' => $trackStock ? ($stockInputs[$warehouse->id] ?? 0) : 0,
+                    'quantity' => $quantity,
                 ]);
+
+                if ($trackStock && $quantity > 0) {
+                    StockMovement::create([
+                        'product_id' => $product->id,
+                        'warehouse_id' => $warehouse->id,
+                        'user_id' => $request->user()?->id,
+                        'type' => 'initial',
+                        'quantity_before' => 0,
+                        'quantity_change' => $quantity,
+                        'quantity_after' => $quantity,
+                        'notes' => 'Initial stock when product created.',
+                    ]);
+                }
             }
         });
 
