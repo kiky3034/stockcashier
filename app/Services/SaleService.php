@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SalePayment;
+use App\Models\Stock;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\DB;
@@ -116,6 +117,20 @@ class SaleService
             foreach ($preparedItems as $preparedItem) {
                 /** @var Product $product */
                 $product = $preparedItem['product'];
+
+                if ($product->track_stock) {
+                    $availableStock = Stock::query()
+                        ->where('product_id', $product->id)
+                        ->where('warehouse_id', $warehouse->id)
+                        ->lockForUpdate()
+                        ->value('quantity') ?? 0;
+
+                    if ((float) $preparedItem['quantity'] > (float) $availableStock) {
+                        throw ValidationException::withMessages([
+                            'items' => 'Stok produk ' . $product->name . ' tidak mencukupi. Stok tersedia: ' . $availableStock,
+                        ]);
+                    }
+                }
 
                 SaleItem::create([
                     'sale_id' => $sale->id,

@@ -46,6 +46,11 @@
                                    name="barcode"
                                    value="{{ old('barcode') }}"
                                    class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
+
+                            <p class="mt-1 text-xs text-gray-500">
+                                Barcode bisa diisi manual atau dari kode barcode produk. Scanner barcode biasanya membaca kode ini seperti input keyboard.
+                            </p>
+
                             @error('barcode')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror

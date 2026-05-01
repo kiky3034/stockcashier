@@ -86,11 +86,17 @@
                                                 {{ $product->name }}
                                             </div>
 
-                                            <div class="mt-1 text-xs text-gray-500">
-                                                SKU: {{ $product->sku }}
-                                                @if ($product->barcode)
-                                                    · Barcode: {{ $product->barcode }}
-                                                @endif
+                                            <div class="mt-1 space-y-0.5 text-xs text-gray-500">
+                                                <div>SKU: {{ $product->sku }}</div>
+
+                                                <div>
+                                                    Barcode:
+                                                    @if ($product->barcode)
+                                                        <span class="font-mono text-gray-700">{{ $product->barcode }}</span>
+                                                    @else
+                                                        <span class="text-gray-400">-</span>
+                                                    @endif
+                                                </div>
                                             </div>
 
                                             @if ($product->supplier)

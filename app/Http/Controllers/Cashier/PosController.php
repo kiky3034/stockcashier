@@ -20,6 +20,10 @@ class PosController extends Controller
             ->orderBy('name')
             ->get();
 
+        $warehouses = Warehouse::where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
         return view('pages.cashier.pos.index', [
             'products' => $products,
             'posProducts' => $products->map(function ($product) {
@@ -28,16 +32,21 @@ class PosController extends Controller
                     'name' => $product->name,
                     'sku' => $product->sku,
                     'barcode' => $product->barcode,
-                    'image_url' => $product->image_path ? asset('storage/' . $product->image_path) : null,
                     'price' => (float) $product->selling_price,
                     'unit' => $product->unit?->abbreviation,
                     'category' => $product->category?->name,
-                    'stock' => (float) $product->stocks->sum('quantity'),
+                    'track_stock' => (bool) $product->track_stock,
+                    'image_url' => $product->image_path ? asset('storage/' . $product->image_path) : null,
+                    'stocks_by_warehouse' => $product->stocks
+                        ->mapWithKeys(function ($stock) {
+                            return [
+                                $stock->warehouse_id => (float) $stock->quantity,
+                            ];
+                        })
+                        ->all(),
                 ];
             })->values()->all(),
-            'warehouses' => Warehouse::where('is_active', true)
-                ->orderBy('name')
-                ->get(),
+            'warehouses' => $warehouses,
         ]);
     }
 
