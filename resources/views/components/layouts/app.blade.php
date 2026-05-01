@@ -54,6 +54,10 @@
                                 <x-sidebar-link href="{{ route('admin.activity-logs.index') }}" :active="request()->routeIs('admin.activity-logs.*')">
                                     Activity Logs
                                 </x-sidebar-link>
+
+                                <x-sidebar-link href="{{ route('admin.settings.edit') }}" :active="request()->routeIs('admin.settings.*')">
+                                    Settings
+                                </x-sidebar-link>
                             </div>
                         </div>
                     @endif

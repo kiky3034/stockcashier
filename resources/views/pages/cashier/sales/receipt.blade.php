@@ -44,8 +44,21 @@
 
     <div class="receipt bg-white p-4 text-sm shadow-sm">
         <div class="text-center">
-            <h1 class="text-lg font-bold">StockCashier</h1>
-            <p class="text-xs text-gray-600">Sales Receipt</p>
+            <h1 class="text-lg font-bold">{{ $settings['store_name'] ?? 'StockCashier Store' }}</h1>
+
+            @if (! empty($settings['store_address']))
+                <p class="text-xs text-gray-600">{{ $settings['store_address'] }}</p>
+            @endif
+
+            @if (! empty($settings['store_phone']))
+                <p class="text-xs text-gray-600">Telp: {{ $settings['store_phone'] }}</p>
+            @endif
+
+            @if (! empty($settings['store_email']))
+                <p class="text-xs text-gray-600">{{ $settings['store_email'] }}</p>
+            @endif
+
+            <p class="mt-1 text-xs text-gray-600">Sales Receipt</p>
         </div>
 
         <div class="my-3 border-t border-dashed border-gray-400"></div>
@@ -136,7 +149,7 @@
         <div class="my-3 border-t border-dashed border-gray-400"></div>
 
         <div class="text-center text-xs text-gray-600">
-            <p>Terima kasih sudah berbelanja.</p>
+            <p>{{ $settings['receipt_footer'] ?? 'Terima kasih sudah berbelanja.' }}</p>
             <p>Barang yang sudah dibeli tidak dapat dikembalikan tanpa struk.</p>
         </div>
     </div>

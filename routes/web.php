@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\PurchaseController;
 use App\Http\Controllers\Owner\ReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\AppSettingController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -119,6 +120,9 @@ Route::middleware(['auth', 'role:admin'])
 
         Route::get('activity-logs', [ActivityLogController::class, 'index'])
             ->name('activity-logs.index');
+        Route::get('settings', [AppSettingController::class, 'edit'])->name('settings.edit');
+        Route::put('settings', [AppSettingController::class, 'update'])->name('settings.update');
+        
     });
 
 Route::middleware(['auth', 'role:owner|admin'])

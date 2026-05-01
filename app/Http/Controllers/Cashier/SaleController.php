@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Services\SaleService;
 use Illuminate\Http\RedirectResponse;
+use App\Models\AppSetting;
 
 class SaleController extends Controller
 {
@@ -56,6 +57,14 @@ class SaleController extends Controller
 
         return view('pages.cashier.sales.receipt', [
             'sale' => $sale,
+            'settings' => AppSetting::values([
+                'store_name' => 'StockCashier Store',
+                'store_address' => '',
+                'store_phone' => '',
+                'store_email' => '',
+                'receipt_footer' => 'Terima kasih sudah berbelanja.',
+                'currency_prefix' => 'Rp',
+            ]),
         ]);
     }
 
