@@ -1,124 +1,168 @@
 <x-layouts.app :title="__('Create Warehouse')">
-    <div class="p-6">
-        <div class="mx-auto max-w-2xl space-y-6">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Add Warehouse</h1>
-                <p class="mt-1 text-sm text-gray-600">
-                    Tambahkan lokasi penyimpanan stok baru.
-                </p>
-            </div>
+    <div class="space-y-6 p-4 sm:p-6">
+        <x-page-header
+            title="Add Warehouse"
+            description="Tambahkan lokasi penyimpanan stok baru untuk StockCashier."
+        >
+            <x-slot:actions>
+                <x-ui.link-button href="{{ route('admin.warehouses.index') }}" variant="secondary">
+                    Back
+                </x-ui.link-button>
+            </x-slot:actions>
+        </x-page-header>
 
-            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.warehouses.store') }}" class="space-y-5"
-                      data-confirm-submit
-                      data-confirm-title="Simpan warehouse baru?"
-                      data-confirm-text="Warehouse akan ditambahkan sebagai lokasi stok baru."
-                      data-confirm-button="Ya, simpan"
-                      data-confirm-icon="question">
-                    @csrf
+        <form method="POST" action="{{ route('admin.warehouses.store') }}" class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]"
+              data-confirm-submit
+              data-confirm-title="Simpan warehouse baru?"
+              data-confirm-text="Warehouse akan ditambahkan sebagai lokasi stok baru."
+              data-confirm-button="Ya, simpan"
+              data-confirm-icon="question">
+            @csrf
 
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700">
-                            Name
-                        </label>
-                        <input type="text"
-                               id="name"
-                               name="name"
-                               value="{{ old('name') }}"
-                               placeholder="Contoh: Main Warehouse"
-                               class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900"
-                               autofocus>
-
-                        @error('name')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+            <div class="space-y-6">
+                <x-ui.card>
+                    <div class="border-b border-slate-100 pb-4">
+                        <h2 class="text-lg font-bold text-slate-900">Warehouse Information</h2>
+                        <p class="mt-1 text-sm text-slate-500">Isi nama, kode unik, dan alamat warehouse.</p>
                     </div>
 
-                    <div>
-                        <label for="code" class="block text-sm font-medium text-gray-700">
-                            Code
-                        </label>
-                        <input type="text"
-                               id="code"
-                               name="code"
-                               autocomplete="off"
-                               value="{{ old('code') }}"
-                               placeholder="Contoh: MAIN"
-                               class="mt-1 w-full rounded-lg border-gray-300 text-sm uppercase focus:border-gray-900 focus:ring-gray-900">
+                    <div class="mt-5 grid gap-5 md:grid-cols-2">
+                        <div>
+                            <label for="name" class="block text-sm font-semibold text-slate-700">Name</label>
+                            <input type="text"
+                                   id="name"
+                                   name="name"
+                                   value="{{ old('name') }}"
+                                   placeholder="Contoh: Main Warehouse"
+                                   class="py-2 mt-2 block w-full rounded-2xl border-slate-200 bg-slate-50 text-sm shadow-sm transition focus:border-sky-400 focus:bg-white focus:ring-sky-100"
+                                   autofocus>
 
-                        @error('code')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                            @error('name')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="code" class="block text-sm font-semibold text-slate-700">Code</label>
+                            <input type="text"
+                                   id="code"
+                                   name="code"
+                                   autocomplete="off"
+                                   value="{{ old('code') }}"
+                                   placeholder="Contoh: MAIN"
+                                   class="py-2 mt-2 block w-full rounded-2xl border-slate-200 bg-slate-50 font-mono text-sm uppercase shadow-sm transition focus:border-sky-400 focus:bg-white focus:ring-sky-100">
+
+                            <p class="mt-1 text-xs text-slate-500">Kode otomatis uppercase dan spasi diganti tanda minus.</p>
+
+                            @error('code')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
-                    <div>
-                        <label for="address" class="block text-sm font-medium text-gray-700">
-                            Address
-                        </label>
+                    <div class="mt-5">
+                        <label for="address" class="block text-sm font-semibold text-slate-700">Address</label>
                         <textarea id="address"
                                   name="address"
-                                  rows="4"
+                                  rows="5"
                                   placeholder="Alamat warehouse"
-                                  class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">{{ old('address') }}</textarea>
+                                  class="mt-2 block w-full rounded-2xl border-slate-200 bg-slate-50 text-sm shadow-sm transition focus:border-sky-400 focus:bg-white focus:ring-sky-100">{{ old('address') }}</textarea>
 
                         @error('address')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
+                </x-ui.card>
 
-                    <div class="space-y-3">
-                        <label class="flex items-center gap-2">
+                <x-ui.card>
+                    <div class="border-b border-slate-100 pb-4">
+                        <h2 class="text-lg font-bold text-slate-900">Warehouse Status</h2>
+                        <p class="mt-1 text-sm text-slate-500">Atur status operasional dan default warehouse.</p>
+                    </div>
+
+                    <div class="mt-5 grid gap-4 md:grid-cols-2">
+                        <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-sky-200 hover:bg-sky-50">
                             <input type="checkbox"
                                    name="is_default"
                                    id="is_default"
                                    value="1"
-                                   class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                                   class="mt-1 rounded border-slate-300 text-sky-500 focus:ring-sky-100"
                                    @checked(old('is_default', false))>
 
-                            <span class="text-sm text-gray-700">Set as default warehouse</span>
+                            <span>
+                                <span class="block text-sm font-semibold text-slate-800">Set as default warehouse</span>
+                                <span class="mt-1 block text-xs leading-5 text-slate-500">Warehouse ini akan menjadi pilihan utama untuk stok/transaksi.</span>
+                            </span>
                         </label>
 
-                        @error('is_default')
-                            <p class="text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-
-                        <label class="flex items-center gap-2">
+                        <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-sky-200 hover:bg-sky-50">
                             <input type="checkbox"
                                    name="is_active"
                                    id="is_active"
                                    value="1"
-                                   class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                                   class="mt-1 rounded border-slate-300 text-sky-500 focus:ring-sky-100"
                                    @checked(old('is_active', true))>
 
-                            <span class="text-sm text-gray-700">Active</span>
+                            <span>
+                                <span class="block text-sm font-semibold text-slate-800">Active</span>
+                                <span class="mt-1 block text-xs leading-5 text-slate-500">Warehouse aktif dapat digunakan untuk stock dan purchase.</span>
+                            </span>
                         </label>
-
-                        @error('is_active')
-                            <p class="text-sm text-red-600">{{ $message }}</p>
-                        @enderror
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 border-t border-gray-200 pt-5">
-                        <a href="{{ route('admin.warehouses.index') }}"
-                           class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                            Cancel
-                        </a>
+                    @error('is_default')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
 
-                        <button type="submit"
-                                class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
-                            Save
-                        </button>
-                    </div>
-                </form>
+                    @error('is_active')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </x-ui.card>
             </div>
-        </div>
+
+            <aside class="space-y-6 xl:sticky xl:top-24 xl:self-start">
+                <x-ui.card>
+                    <div class="flex items-center gap-4">
+                        <div class="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-sky-500 to-cyan-400 font-mono text-xl font-black text-white shadow-sm">
+                            <span id="previewCode">WH</span>
+                        </div>
+
+                        <div>
+                            <div class="text-sm text-slate-500">Preview</div>
+                            <div id="previewName" class="mt-1 font-bold text-slate-900">New Warehouse</div>
+                            <div id="previewStatus" class="mt-1 text-xs font-semibold text-emerald-700">Active</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 rounded-2xl bg-sky-50 p-4 text-sm text-sky-800 ring-1 ring-sky-100">
+                        Gunakan kode pendek yang mudah dikenali, seperti <span class="font-bold">MAIN</span>, <span class="font-bold">STORE-01</span>, atau <span class="font-bold">GUDANG-A</span>.
+                    </div>
+                </x-ui.card>
+
+                <x-ui.card>
+                    <div class="space-y-3">
+                        <x-ui.button-primary type="submit" class="w-full">
+                            Save Warehouse
+                        </x-ui.button-primary>
+
+                        <x-ui.link-button href="{{ route('admin.warehouses.index') }}" variant="secondary" class="w-full">
+                            Cancel
+                        </x-ui.link-button>
+                    </div>
+                </x-ui.card>
+            </aside>
+        </form>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const nameInput = document.getElementById('name');
             const codeInput = document.getElementById('code');
             const defaultCheckbox = document.getElementById('is_default');
             const activeCheckbox = document.getElementById('is_active');
+            const previewCode = document.getElementById('previewCode');
+            const previewName = document.getElementById('previewName');
+            const previewStatus = document.getElementById('previewStatus');
 
             function fireToast(icon, title) {
                 if (window.Toast) {
@@ -131,10 +175,24 @@
                 }
             }
 
+            function syncPreview() {
+                previewCode.textContent = (codeInput.value || 'WH').slice(0, 6);
+                previewName.textContent = nameInput.value || 'New Warehouse';
+                previewStatus.textContent = activeCheckbox.checked ? 'Active' : 'Inactive';
+                previewStatus.className = activeCheckbox.checked
+                    ? 'mt-1 text-xs font-semibold text-emerald-700'
+                    : 'mt-1 text-xs font-semibold text-slate-500';
+            }
+
             if (codeInput) {
                 codeInput.addEventListener('input', function () {
                     codeInput.value = codeInput.value.toUpperCase().replace(/\s+/g, '-');
+                    syncPreview();
                 });
+            }
+
+            if (nameInput) {
+                nameInput.addEventListener('input', syncPreview);
             }
 
             if (defaultCheckbox) {
@@ -151,8 +209,11 @@
                         activeCheckbox.checked ? 'success' : 'warning',
                         activeCheckbox.checked ? 'Warehouse akan aktif.' : 'Warehouse akan nonaktif.'
                     );
+                    syncPreview();
                 });
             }
+
+            syncPreview();
         });
     </script>
 </x-layouts.app>

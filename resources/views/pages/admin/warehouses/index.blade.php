@@ -1,121 +1,162 @@
 <x-layouts.app :title="__('Warehouses')">
-    <div class="p-6 space-y-6">
-        <div class="flex items-center justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Warehouses</h1>
-                <p class="mt-1 text-sm text-gray-600">
-                    Kelola lokasi penyimpanan stok.
-                </p>
-            </div>
+    @php
+        $warehouseItems = method_exists($warehouses, 'getCollection') ? $warehouses->getCollection() : collect($warehouses);
+        $totalWarehouses = method_exists($warehouses, 'total') ? $warehouses->total() : $warehouseItems->count();
+        $activeWarehouses = $warehouseItems->where('is_active', true)->count();
+        $defaultWarehouse = $warehouseItems->firstWhere('is_default', true);
+    @endphp
 
-            <a href="{{ route('admin.warehouses.create') }}"
-               class="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
-                + Add Warehouse
-            </a>
+    <div class="space-y-6 p-4 sm:p-6">
+        <x-page-header
+            title="Warehouses"
+            description="Kelola lokasi penyimpanan stok dan gudang default StockCashier."
+        >
+            <x-slot:actions>
+                <x-ui.link-button href="{{ route('admin.warehouses.create') }}">
+                    + Add Warehouse
+                </x-ui.link-button>
+            </x-slot:actions>
+        </x-page-header>
+
+        <div class="grid gap-4 md:grid-cols-3">
+            <x-ui.stat-card
+                label="Total Warehouses"
+                value="{{ number_format($totalWarehouses, 0, ',', '.') }}"
+                description="Semua lokasi penyimpanan"
+                tone="sky"
+            />
+
+            <x-ui.stat-card
+                label="Active on Page"
+                value="{{ number_format($activeWarehouses, 0, ',', '.') }}"
+                description="Warehouse aktif di halaman ini"
+                tone="green"
+            />
+
+            <x-ui.stat-card
+                label="Default Warehouse"
+                value="{{ $defaultWarehouse?->code ?? '-' }}"
+                description="{{ $defaultWarehouse?->name ?? 'Belum ada default di halaman ini' }}"
+                tone="amber"
+            />
         </div>
 
-        <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div class="border-b border-gray-200 p-4">
-                <form method="GET" action="{{ route('admin.warehouses.index') }}" class="flex gap-3">
-                    <input type="text"
-                           name="search"
-                           value="{{ $search }}"
-                           placeholder="Cari warehouse..."
-                           class="w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
+        <x-ui.card padding="p-0" class="overflow-hidden">
+            <div class="border-b border-slate-100 p-4 sm:p-5">
+                <form method="GET" action="{{ route('admin.warehouses.index') }}" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto]">
+                    <div>
+                        <label for="search" class="sr-only">Search</label>
+                        <input type="text"
+                               id="search"
+                               name="search"
+                               value="{{ $search }}"
+                               placeholder="Cari nama, kode, atau alamat warehouse..."
+                               class="block w-full rounded-2xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 shadow-sm transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:ring-sky-100">
+                    </div>
 
                     <button type="submit"
-                            class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
+                            class="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600 focus:outline-none focus:ring-4 focus:ring-sky-100">
                         Search
                     </button>
 
                     @if ($search)
                         <a href="{{ route('admin.warehouses.index') }}"
-                           class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                           class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700">
                             Reset
                         </a>
                     @endif
                 </form>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50">
+            <div class="hidden overflow-x-auto lg:block">
+                <table class="min-w-full divide-y divide-slate-100 text-sm">
+                    <thead class="bg-slate-50">
                         <tr>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Name</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Code</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Default</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
-                            <th class="px-4 py-3 text-right font-semibold text-gray-700">Action</th>
+                            <th class="px-5 py-3 text-left text-sm font-semibold text-slate-700">Warehouse</th>
+                            <th class="px-5 py-3 text-left text-sm font-semibold text-slate-700">Code</th>
+                            <th class="px-5 py-3 text-left text-sm font-semibold text-slate-700">Default</th>
+                            <th class="px-5 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
+                            <th class="px-5 py-3 text-right text-sm font-semibold text-slate-700">Action</th>
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-gray-200 bg-white">
+                    <tbody class="divide-y divide-slate-100 bg-white">
                         @forelse ($warehouses as $warehouse)
-                            <tr>
-                                <td class="px-4 py-3">
-                                    <div class="font-medium text-gray-900">
-                                        {{ $warehouse->name }}
-                                    </div>
+                            <tr class="transition hover:bg-sky-50/40">
+                                <td class="px-5 py-4">
+                                    <div class="font-semibold text-slate-900">{{ $warehouse->name }}</div>
 
                                     @if ($warehouse->address)
-                                        <div class="mt-1 max-w-md text-xs text-gray-500">
+                                        <div class="mt-1 max-w-xl text-xs leading-5 text-slate-500">
                                             {{ $warehouse->address }}
                                         </div>
                                     @endif
                                 </td>
 
-                                <td class="px-4 py-3 text-gray-600">
+                                <td class="px-5 py-4">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-mono">{{ $warehouse->code }}</span>
+                                        <span class="rounded-xl bg-slate-50 px-2.5 py-1 font-mono text-xs font-bold text-slate-700 ring-1 ring-slate-200">
+                                            {{ $warehouse->code }}
+                                        </span>
 
                                         <button type="button"
-                                                class="rounded border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                                                title="Copy code"
+                                                class="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
                                                 data-copy-warehouse-code="{{ $warehouse->code }}">
-                                            Copy
+                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                            </svg>
                                         </button>
                                     </div>
                                 </td>
 
-                                <td class="px-4 py-3">
+                                <td class="px-5 py-4">
                                     @if ($warehouse->is_default)
-                                        <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+                                        <span class="inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-100">
                                             Default
                                         </span>
                                     @else
-                                        <span class="text-xs text-gray-500">
-                                            -
-                                        </span>
+                                        <span class="text-xs text-slate-400">-</span>
                                     @endif
                                 </td>
 
-                                <td class="px-4 py-3">
+                                <td class="px-5 py-4">
                                     @if ($warehouse->is_active)
-                                        <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                                        <span class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
                                             Active
                                         </span>
                                     @else
-                                        <span class="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                                        <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
                                             Inactive
                                         </span>
                                     @endif
                                 </td>
 
-                                <td class="px-4 py-3">
+                                <td class="px-5 py-4">
                                     <div class="flex justify-end gap-2">
                                         <button type="button"
-                                                class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                                title="Detail"
+                                                class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
                                                 data-warehouse-detail
                                                 data-name="{{ $warehouse->name }}"
                                                 data-code="{{ $warehouse->code }}"
                                                 data-address="{{ $warehouse->address ?: '-' }}"
                                                 data-default="{{ $warehouse->is_default ? 'Yes' : 'No' }}"
                                                 data-status="{{ $warehouse->is_active ? 'Active' : 'Inactive' }}">
-                                            Detail
+                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
+                                                <circle cx="12" cy="12" r="3" />
+                                            </svg>
                                         </button>
 
                                         <a href="{{ route('admin.warehouses.edit', $warehouse) }}"
-                                           class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
-                                            Edit
+                                           title="Edit"
+                                           class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700">
+                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M12 20h9" />
+                                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                            </svg>
                                         </a>
 
                                         <form method="POST"
@@ -129,8 +170,15 @@
                                             @method('DELETE')
 
                                             <button type="submit"
-                                                    class="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">
-                                                Delete
+                                                    title="Delete"
+                                                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-200 text-red-600 transition hover:bg-red-50">
+                                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M3 6h18" />
+                                                    <path d="M8 6V4h8v2" />
+                                                    <path d="M19 6l-1 14H6L5 6" />
+                                                    <path d="M10 11v6" />
+                                                    <path d="M14 11v6" />
+                                                </svg>
                                             </button>
                                         </form>
                                     </div>
@@ -138,7 +186,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="5" class="px-5 py-12 text-center text-sm text-slate-500">
                                     Belum ada warehouse.
                                 </td>
                             </tr>
@@ -147,10 +195,80 @@
                 </table>
             </div>
 
-            <div class="border-t border-gray-200 p-4">
+            <div class="divide-y divide-slate-100 lg:hidden">
+                @forelse ($warehouses as $warehouse)
+                    <div class="p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="font-semibold text-slate-900">{{ $warehouse->name }}</div>
+                                <div class="mt-1 font-mono text-xs text-slate-500">{{ $warehouse->code }}</div>
+                            </div>
+
+                            <div class="flex gap-2">
+                                @if ($warehouse->is_default)
+                                    <span class="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-100">Default</span>
+                                @endif
+
+                                @if ($warehouse->is_active)
+                                    <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Active</span>
+                                @else
+                                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">Inactive</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        @if ($warehouse->address)
+                            <p class="mt-3 text-sm leading-6 text-slate-500">{{ $warehouse->address }}</p>
+                        @endif
+
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <button type="button"
+                                    class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+                                    data-copy-warehouse-code="{{ $warehouse->code }}">
+                                Copy Code
+                            </button>
+
+                            <button type="button"
+                                    class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+                                    data-warehouse-detail
+                                    data-name="{{ $warehouse->name }}"
+                                    data-code="{{ $warehouse->code }}"
+                                    data-address="{{ $warehouse->address ?: '-' }}"
+                                    data-default="{{ $warehouse->is_default ? 'Yes' : 'No' }}"
+                                    data-status="{{ $warehouse->is_active ? 'Active' : 'Inactive' }}">
+                                Detail
+                            </button>
+
+                            <a href="{{ route('admin.warehouses.edit', $warehouse) }}"
+                               class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700">
+                                Edit
+                            </a>
+
+                            <form method="POST"
+                                  action="{{ route('admin.warehouses.destroy', $warehouse) }}"
+                                  data-confirm-submit
+                                  data-confirm-title="Hapus warehouse?"
+                                  data-confirm-text="Warehouse {{ $warehouse->name }} akan dihapus jika belum digunakan transaksi/stok."
+                                  data-confirm-button="Ya, hapus"
+                                  data-confirm-icon="warning">
+                                @csrf
+                                @method('DELETE')
+
+                                <button type="submit" class="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-600">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-10 text-center text-sm text-slate-500">Belum ada warehouse.</div>
+                @endforelse
+            </div>
+
+            <div class="border-t border-slate-100 p-4">
                 {{ $warehouses->links() }}
             </div>
-        </div>
+        </x-ui.card>
     </div>
 
     <script>
@@ -192,11 +310,13 @@
                 button.addEventListener('click', function () {
                     const html = `
                         <div class="text-left text-sm">
-                            <div class="mb-2"><strong>Name:</strong> ${escapeHtml(button.dataset.name)}</div>
-                            <div class="mb-2"><strong>Code:</strong> <code>${escapeHtml(button.dataset.code)}</code></div>
-                            <div class="mb-2"><strong>Address:</strong> ${escapeHtml(button.dataset.address)}</div>
-                            <div class="mb-2"><strong>Default:</strong> ${escapeHtml(button.dataset.default)}</div>
-                            <div><strong>Status:</strong> ${escapeHtml(button.dataset.status)}</div>
+                            <div class="grid gap-3">
+                                <div><strong>Name:</strong><br>${escapeHtml(button.dataset.name)}</div>
+                                <div><strong>Code:</strong><br><code>${escapeHtml(button.dataset.code)}</code></div>
+                                <div><strong>Address:</strong><br>${escapeHtml(button.dataset.address)}</div>
+                                <div><strong>Default:</strong><br>${escapeHtml(button.dataset.default)}</div>
+                                <div><strong>Status:</strong><br>${escapeHtml(button.dataset.status)}</div>
+                            </div>
                         </div>
                     `;
 
@@ -204,9 +324,9 @@
                         Swal.fire({
                             title: 'Warehouse Detail',
                             html: html,
-                            icon: 'info',
-                            confirmButtonText: 'Tutup',
-                            confirmButtonColor: '#111827'
+                            confirmButtonText: 'Close',
+                            confirmButtonColor: '#0ea5e9',
+                            width: 560,
                         });
                     }
                 });

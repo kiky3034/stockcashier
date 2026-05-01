@@ -1,31 +1,61 @@
 <x-layouts.app :title="__('Purchases')">
-    <div class="p-6 space-y-6">
-        <div class="flex items-center justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Purchases</h1>
-                <p class="mt-1 text-sm text-gray-600">
-                    Riwayat pembelian barang dari supplier.
-                </p>
-            </div>
+    @php
+        $pageTotalAmount = $purchases->sum('total_amount');
+        $pagePurchaseCount = $purchases->count();
+        $pageSupplierCount = $purchases->pluck('supplier_id')->filter()->unique()->count();
+    @endphp
 
-            <a href="{{ route('admin.purchases.create') }}"
-               class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
-                + New Purchase
-            </a>
+    <div class="space-y-6 p-4 sm:p-6">
+        <x-page-header
+            title="Purchases"
+            description="Riwayat pembelian barang dari supplier dan stok masuk ke warehouse."
+        >
+            <x-slot:actions>
+                <x-ui.link-button href="{{ route('admin.purchases.create') }}">
+                    <span class="mr-2">+</span>
+                    New Purchase
+                </x-ui.link-button>
+            </x-slot:actions>
+        </x-page-header>
+
+        <div class="grid gap-4 md:grid-cols-3">
+            <x-ui.stat-card
+                label="Purchases on Page"
+                value="{{ number_format($pagePurchaseCount, 0, ',', '.') }}"
+                description="Jumlah purchase pada halaman ini"
+                tone="sky"
+            />
+
+            <x-ui.stat-card
+                label="Total Amount"
+                value="Rp {{ number_format($pageTotalAmount, 0, ',', '.') }}"
+                description="Total purchase pada halaman ini"
+                tone="green"
+            />
+
+            <x-ui.stat-card
+                label="Suppliers"
+                value="{{ number_format($pageSupplierCount, 0, ',', '.') }}"
+                description="Supplier unik pada halaman ini"
+                tone="slate"
+            />
         </div>
 
-
-        <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div class="border-b border-gray-200 p-4">
-                <form method="GET" action="{{ route('admin.purchases.index') }}" class="grid gap-3 md:grid-cols-4">
-                    <input type="text"
-                           name="search"
-                           value="{{ $search }}"
-                           placeholder="Cari nomor purchase..."
-                           class="rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
+        <x-ui.card padding="p-0">
+            <div class="border-b border-slate-100 p-4 sm:p-5">
+                <form method="GET" action="{{ route('admin.purchases.index') }}" class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_220px_auto]">
+                    <div>
+                        <label for="search" class="sr-only">Search</label>
+                        <input type="text"
+                               id="search"
+                               name="search"
+                               value="{{ $search }}"
+                               placeholder="Cari nomor purchase..."
+                               class="block w-full rounded-2xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 shadow-sm transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:ring-sky-100">
+                    </div>
 
                     <select name="supplier_id"
-                            class="rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
+                            class="block w-full rounded-2xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 shadow-sm transition focus:border-sky-400 focus:bg-white focus:ring-sky-100">
                         <option value="">All Suppliers</option>
                         @foreach ($suppliers as $supplier)
                             <option value="{{ $supplier->id }}" @selected($supplierId == $supplier->id)>
@@ -35,7 +65,7 @@
                     </select>
 
                     <select name="warehouse_id"
-                            class="rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
+                            class="block w-full rounded-2xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 shadow-sm transition focus:border-sky-400 focus:bg-white focus:ring-sky-100">
                         <option value="">All Warehouses</option>
                         @foreach ($warehouses as $warehouse)
                             <option value="{{ $warehouse->id }}" @selected($warehouseId == $warehouse->id)>
@@ -46,76 +76,86 @@
 
                     <div class="flex gap-2">
                         <button type="submit"
-                                class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
+                                class="inline-flex flex-1 items-center justify-center rounded-2xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600 focus:outline-none focus:ring-4 focus:ring-sky-100 lg:flex-none">
                             Filter
                         </button>
 
                         <a href="{{ route('admin.purchases.index') }}"
-                           class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                           class="inline-flex flex-1 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 lg:flex-none">
                             Reset
                         </a>
                     </div>
                 </form>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50">
+            <div class="hidden overflow-x-auto lg:block">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50">
                         <tr>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Purchase Number</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Date</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Supplier</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Warehouse</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">User</th>
-                            <th class="px-4 py-3 text-right font-semibold text-gray-700">Total</th>
-                            <th class="px-4 py-3 text-right font-semibold text-gray-700">Action</th>
+                            <th class="px-4 py-3 text-left font-semibold text-slate-700">Purchase Number</th>
+                            <th class="px-4 py-3 text-left font-semibold text-slate-700">Date</th>
+                            <th class="px-4 py-3 text-left font-semibold text-slate-700">Supplier</th>
+                            <th class="px-4 py-3 text-left font-semibold text-slate-700">Warehouse</th>
+                            <th class="px-4 py-3 text-left font-semibold text-slate-700">User</th>
+                            <th class="px-4 py-3 text-right font-semibold text-slate-700">Total</th>
+                            <th class="px-4 py-3 text-right font-semibold text-slate-700">Action</th>
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-gray-200 bg-white">
+                    <tbody class="divide-y divide-slate-100 bg-white">
                         @forelse ($purchases as $purchase)
-                            <tr>
+                            <tr class="transition hover:bg-sky-50/40">
                                 <td class="px-4 py-3">
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-medium text-gray-900">{{ $purchase->purchase_number }}</span>
-                                        <button type="button"
-                                                class="text-xs font-semibold text-gray-500 hover:text-gray-900"
-                                                data-copy-text="{{ $purchase->purchase_number }}">
-                                            Copy
-                                        </button>
-                                    </div>
+                                    <div class="font-semibold text-slate-900">{{ $purchase->purchase_number }}</div>
+                                    <div class="mt-1 text-xs text-slate-500">ID: {{ $purchase->id }}</div>
                                 </td>
 
-                                <td class="px-4 py-3 text-gray-600">
+                                <td class="px-4 py-3 text-slate-600">
                                     {{ $purchase->purchased_at?->format('d M Y H:i') }}
                                 </td>
 
-                                <td class="px-4 py-3 text-gray-600">
+                                <td class="px-4 py-3 text-slate-600">
                                     {{ $purchase->supplier->name }}
                                 </td>
 
-                                <td class="px-4 py-3 text-gray-600">
+                                <td class="px-4 py-3 text-slate-600">
                                     {{ $purchase->warehouse->name }}
                                 </td>
 
-                                <td class="px-4 py-3 text-gray-600">
+                                <td class="px-4 py-3 text-slate-600">
                                     {{ $purchase->user->name }}
                                 </td>
 
-                                <td class="px-4 py-3 text-right font-semibold text-gray-900">
+                                <td class="px-4 py-3 text-right font-bold text-slate-900">
                                     Rp {{ number_format($purchase->total_amount, 0, ',', '.') }}
                                 </td>
 
-                                <td class="px-4 py-3 text-right">
-                                    <a href="{{ route('admin.purchases.show', $purchase) }}"
-                                       class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
-                                        Detail
-                                    </a>
+                                <td class="px-4 py-3">
+                                    <div class="flex justify-end gap-2">
+                                        <button type="button"
+                                                data-copy-text="{{ $purchase->purchase_number }}"
+                                                title="Copy number"
+                                                class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700">
+                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" />
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                            </svg>
+                                        </button>
+
+                                        <a href="{{ route('admin.purchases.show', $purchase) }}"
+                                           title="Detail"
+                                           class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500 text-white shadow-sm transition hover:bg-sky-600">
+                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
+                                                <circle cx="12" cy="12" r="3" />
+                                            </svg>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="7" class="px-4 py-12 text-center text-slate-500">
                                     Belum ada purchase.
                                 </td>
                             </tr>
@@ -124,10 +164,47 @@
                 </table>
             </div>
 
-            <div class="border-t border-gray-200 p-4">
+            <div class="divide-y divide-slate-100 lg:hidden">
+                @forelse ($purchases as $purchase)
+                    <div class="p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="font-semibold text-slate-900">{{ $purchase->purchase_number }}</div>
+                                <div class="mt-1 text-xs text-slate-500">{{ $purchase->purchased_at?->format('d M Y H:i') }}</div>
+                            </div>
+
+                            <div class="text-right font-bold text-slate-900">
+                                Rp {{ number_format($purchase->total_amount, 0, ',', '.') }}
+                            </div>
+                        </div>
+
+                        <div class="mt-3 grid gap-2 text-sm text-slate-600">
+                            <div>Supplier: <span class="font-medium text-slate-900">{{ $purchase->supplier->name }}</span></div>
+                            <div>Warehouse: <span class="font-medium text-slate-900">{{ $purchase->warehouse->name }}</span></div>
+                            <div>User: <span class="font-medium text-slate-900">{{ $purchase->user->name }}</span></div>
+                        </div>
+
+                        <div class="mt-4 flex gap-2">
+                            <button type="button"
+                                    data-copy-text="{{ $purchase->purchase_number }}"
+                                    class="inline-flex flex-1 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
+                                Copy
+                            </button>
+                            <a href="{{ route('admin.purchases.show', $purchase) }}"
+                               class="inline-flex flex-1 items-center justify-center rounded-2xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white">
+                                Detail
+                            </a>
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-10 text-center text-sm text-slate-500">Belum ada purchase.</div>
+                @endforelse
+            </div>
+
+            <div class="border-t border-slate-100 p-4">
                 {{ $purchases->links() }}
             </div>
-        </div>
+        </x-ui.card>
     </div>
 
     <script>
@@ -139,12 +216,7 @@
                 }
 
                 if (window.Swal) {
-                    Swal.fire({
-                        icon: icon,
-                        title: title,
-                        timer: 1800,
-                        showConfirmButton: false
-                    });
+                    Swal.fire({ icon: icon, title: title, timer: 1800, showConfirmButton: false });
                 }
             }
 
@@ -162,5 +234,4 @@
             });
         });
     </script>
-
 </x-layouts.app>
