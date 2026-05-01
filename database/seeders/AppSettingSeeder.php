@@ -17,6 +17,7 @@ class AppSettingSeeder extends Seeder
             'store_address' => 'Jl. Contoh No. 123',
             'store_phone' => '081234567890',
             'store_email' => 'store@stockcashier.test',
+            'store_logo' => null,
             'receipt_footer' => 'Terima kasih sudah berbelanja.',
             'currency_prefix' => 'Rp',
         ];

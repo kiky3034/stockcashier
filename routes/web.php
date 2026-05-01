@@ -18,6 +18,7 @@ use App\Http\Controllers\Owner\ReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\AppSettingController;
+use App\Http\Controllers\Admin\BackupController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -123,6 +124,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('settings', [AppSettingController::class, 'edit'])->name('settings.edit');
         Route::put('settings', [AppSettingController::class, 'update'])->name('settings.update');
         
+        Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
+        Route::get('backups/database', [BackupController::class, 'database'])->name('backups.database');
     });
 
 Route::middleware(['auth', 'role:owner|admin'])

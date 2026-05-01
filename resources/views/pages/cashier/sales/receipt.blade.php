@@ -44,6 +44,14 @@
 
     <div class="receipt bg-white p-4 text-sm shadow-sm">
         <div class="text-center">
+            @if (! empty($settings['store_logo']))
+                <div class="mb-2 flex justify-center">
+                    <img src="{{ asset('storage/' . $settings['store_logo']) }}"
+                        alt="Store Logo"
+                        class="h-14 w-14 object-contain">
+                </div>
+            @endif
+
             <h1 class="text-lg font-bold">{{ $settings['store_name'] ?? 'StockCashier Store' }}</h1>
 
             @if (! empty($settings['store_address']))

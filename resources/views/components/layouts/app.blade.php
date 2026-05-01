@@ -58,6 +58,10 @@
                                 <x-sidebar-link href="{{ route('admin.settings.edit') }}" :active="request()->routeIs('admin.settings.*')">
                                     Settings
                                 </x-sidebar-link>
+
+                                <x-sidebar-link href="{{ route('admin.backups.index') }}" :active="request()->routeIs('admin.backups.*')">
+                                    Backups
+                                </x-sidebar-link>
                             </div>
                         </div>
                     @endif

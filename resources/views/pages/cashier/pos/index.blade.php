@@ -192,6 +192,11 @@
                 <button type="button"
                         onclick="addToCart(${product.id})"
                         class="rounded-xl border border-gray-200 p-4 text-left hover:bg-gray-50">
+                    ${product.image_url
+                        ? `<img src="${product.image_url}" class="mb-3 h-28 w-full rounded-lg object-cover" alt="${product.name}">`
+                        : `<div class="mb-3 flex h-28 w-full items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">No Image</div>`
+                    }
+
                     <div class="font-semibold text-gray-900">${product.name}</div>
                     <div class="mt-1 text-xs text-gray-500">SKU: ${product.sku}</div>
                     <div class="mt-1 text-xs text-gray-500">${product.category ?? '-'}</div>

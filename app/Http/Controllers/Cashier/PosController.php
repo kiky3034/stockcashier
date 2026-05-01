@@ -28,6 +28,7 @@ class PosController extends Controller
                     'name' => $product->name,
                     'sku' => $product->sku,
                     'barcode' => $product->barcode,
+                    'image_url' => $product->image_path ? asset('storage/' . $product->image_path) : null,
                     'price' => (float) $product->selling_price,
                     'unit' => $product->unit?->abbreviation,
                     'category' => $product->category?->name,

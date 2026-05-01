@@ -9,7 +9,7 @@
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.products.store') }}" class="space-y-6">
+                <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data" class="space-y-6">
                     @csrf
 
                     <div class="grid gap-5 md:grid-cols-2">
@@ -47,6 +47,23 @@
                                    value="{{ old('barcode') }}"
                                    class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
                             @error('barcode')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="image" class="block text-sm font-medium text-gray-700">Product Image</label>
+                            <input type="file"
+                                id="image"
+                                name="image"
+                                accept="image/*"
+                                class="mt-1 block w-full text-sm text-gray-700">
+
+                            <p class="mt-1 text-xs text-gray-500">
+                                Format: JPG, PNG, WEBP. Maksimal 2MB.
+                            </p>
+
+                            @error('image')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

@@ -8,6 +8,7 @@ use App\Services\ActivityLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Storage;
 
 class AppSettingController extends Controller
 {
@@ -18,6 +19,7 @@ class AppSettingController extends Controller
             'store_address' => '',
             'store_phone' => '',
             'store_email' => '',
+            'store_logo' => null,
             'receipt_footer' => 'Terima kasih sudah berbelanja.',
             'currency_prefix' => 'Rp',
         ]);
@@ -34,11 +36,23 @@ class AppSettingController extends Controller
             'store_address' => ['nullable', 'string', 'max:1000'],
             'store_phone' => ['nullable', 'string', 'max:100'],
             'store_email' => ['nullable', 'email', 'max:255'],
+            'store_logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'receipt_footer' => ['nullable', 'string', 'max:1000'],
             'currency_prefix' => ['required', 'string', 'max:10'],
         ]);
 
         $oldSettings = AppSetting::values();
+        if ($request->hasFile('store_logo')) {
+            $oldLogo = $oldSettings['store_logo'] ?? null;
+
+            $validated['store_logo'] = $request->file('store_logo')->store('settings', 'public');
+
+            if ($oldLogo) {
+                Storage::disk('public')->delete($oldLogo);
+            }
+        } else {
+            unset($validated['store_logo']);
+        }
 
         foreach ($validated as $key => $value) {
             AppSetting::setValue($key, $value);

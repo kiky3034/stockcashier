@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'sku',
     'barcode',
     'cost_price',
+    'image_path',
     'selling_price',
     'stock_alert_level',
     'track_stock',

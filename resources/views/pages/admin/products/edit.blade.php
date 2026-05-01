@@ -9,7 +9,7 @@
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.products.update', $product) }}" class="space-y-6">
+                <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data" class="space-y-6">
                     @csrf
                     @method('PUT')
 
@@ -47,6 +47,32 @@
                                    value="{{ old('barcode', $product->barcode) }}"
                                    class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
                             @error('barcode')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="image" class="block text-sm font-medium text-gray-700">Product Image</label>
+
+                            @if ($product->image_path)
+                                <div class="mt-2">
+                                    <img src="{{ asset('storage/' . $product->image_path) }}"
+                                        alt="{{ $product->name }}"
+                                        class="h-24 w-24 rounded-lg border border-gray-200 object-cover">
+                                </div>
+                            @endif
+
+                            <input type="file"
+                                id="image"
+                                name="image"
+                                accept="image/*"
+                                class="mt-2 block w-full text-sm text-gray-700">
+
+                            <p class="mt-1 text-xs text-gray-500">
+                                Kosongkan jika tidak ingin mengganti gambar.
+                            </p>
+
+                            @error('image')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

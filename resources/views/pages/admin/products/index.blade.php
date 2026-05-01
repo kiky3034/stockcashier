@@ -70,22 +70,36 @@
 
                             <tr>
                                 <td class="px-4 py-3">
-                                    <div class="font-medium text-gray-900">
-                                        {{ $product->name }}
-                                    </div>
-
-                                    <div class="mt-1 text-xs text-gray-500">
-                                        SKU: {{ $product->sku }}
-                                        @if ($product->barcode)
-                                            · Barcode: {{ $product->barcode }}
+                                    <div class="flex items-center gap-3">
+                                        @if ($product->image_path)
+                                            <img src="{{ asset('storage/' . $product->image_path) }}"
+                                                alt="{{ $product->name }}"
+                                                class="h-12 w-12 rounded-lg border border-gray-200 object-cover">
+                                        @else
+                                            <div class="flex h-12 w-12 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-xs text-gray-400">
+                                                No Img
+                                            </div>
                                         @endif
-                                    </div>
 
-                                    @if ($product->supplier)
-                                        <div class="mt-1 text-xs text-gray-500">
-                                            Supplier: {{ $product->supplier->name }}
+                                        <div>
+                                            <div class="font-medium text-gray-900">
+                                                {{ $product->name }}
+                                            </div>
+
+                                            <div class="mt-1 text-xs text-gray-500">
+                                                SKU: {{ $product->sku }}
+                                                @if ($product->barcode)
+                                                    · Barcode: {{ $product->barcode }}
+                                                @endif
+                                            </div>
+
+                                            @if ($product->supplier)
+                                                <div class="mt-1 text-xs text-gray-500">
+                                                    Supplier: {{ $product->supplier->name }}
+                                                </div>
+                                            @endif
                                         </div>
-                                    @endif
+                                    </div>
                                 </td>
 
                                 <td class="px-4 py-3 text-gray-600">

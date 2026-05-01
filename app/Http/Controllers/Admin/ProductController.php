@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use App\Services\ActivityLogService;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -63,6 +64,7 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'sku' => ['required', 'string', 'max:255', 'unique:products,sku'],
             'barcode' => ['nullable', 'string', 'max:255', 'unique:products,barcode'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
 
             'cost_price' => ['required', 'numeric', 'min:0'],
             'selling_price' => ['required', 'numeric', 'min:0'],
@@ -76,7 +78,11 @@ class ProductController extends Controller
             'stocks.*' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        DB::transaction(function () use ($request, $validated, $activityLog) {
+        $imagePath = $request->hasFile('image')
+            ? $request->file('image')->store('products', 'public')
+            : null;
+
+        DB::transaction(function () use ($request, $validated, $activityLog, $imagePath) {
             $trackStock = $request->boolean('track_stock');
 
             $product = Product::create([
@@ -87,6 +93,7 @@ class ProductController extends Controller
                 'slug' => $this->makeUniqueSlug($validated['name']),
                 'sku' => strtoupper($validated['sku']),
                 'barcode' => $validated['barcode'] ?? null,
+                'image_path' => $imagePath,
                 'cost_price' => $validated['cost_price'],
                 'selling_price' => $validated['selling_price'],
                 'stock_alert_level' => $validated['stock_alert_level'] ?? 0,
@@ -176,7 +183,7 @@ class ProductController extends Controller
                 'max:255',
                 Rule::unique('products', 'barcode')->ignore($product->id),
             ],
-
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'cost_price' => ['required', 'numeric', 'min:0'],
             'selling_price' => ['required', 'numeric', 'min:0'],
             'stock_alert_level' => ['nullable', 'numeric', 'min:0'],
@@ -200,7 +207,15 @@ class ProductController extends Controller
             'is_active' => $product->is_active,
         ];
 
-        DB::transaction(function () use ($request, $validated, $product, $oldData, $activityLog) {
+        $oldImagePath = $product->image_path;
+
+        $imagePath = $oldImagePath;
+
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('products', 'public');
+        }
+
+        DB::transaction(function () use ($request, $validated, $product, $imagePath, $oldData, $activityLog) {
             $trackStock = $request->boolean('track_stock');
 
             $product->update([
@@ -211,6 +226,7 @@ class ProductController extends Controller
                 'slug' => $this->makeUniqueSlug($validated['name'], $product->id),
                 'sku' => strtoupper($validated['sku']),
                 'barcode' => $validated['barcode'] ?? null,
+                'image_path' => $imagePath,
                 'cost_price' => $validated['cost_price'],
                 'selling_price' => $validated['selling_price'],
                 'stock_alert_level' => $validated['stock_alert_level'] ?? 0,
@@ -256,6 +272,9 @@ class ProductController extends Controller
             );
         });
 
+        if ($request->hasFile('image') && $oldImagePath) {
+            Storage::disk('public')->delete($oldImagePath);
+        }
         return redirect()
             ->route('admin.products.index')
             ->with('success', 'Product berhasil diperbarui.');
@@ -289,8 +308,12 @@ class ProductController extends Controller
             'cost_price' => $product->cost_price,
             'selling_price' => $product->selling_price,
         ];
-
+        
+        $imagePath = $product->image_path;
         $product->delete();
+        if ($imagePath) {
+            Storage::disk('public')->delete($imagePath);
+        }
 
         $activityLog->log(
             event: 'product_deleted',

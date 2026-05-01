@@ -11,7 +11,7 @@
             <x-flash-message />
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-5">
+                <form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data" class="space-y-5">
                     @csrf
                     @method('PUT')
 
@@ -75,6 +75,33 @@
                                    class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
 
                             @error('store_email')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="store_logo" class="block text-sm font-medium text-gray-700">
+                                Store Logo
+                            </label>
+
+                            @if (! empty($settings['store_logo']))
+                                <div class="mt-2">
+                                    <img src="{{ asset('storage/' . $settings['store_logo']) }}"
+                                        alt="Store Logo"
+                                        class="h-20 w-20 rounded-lg border border-gray-200 object-contain">
+                                </div>
+                            @endif
+
+                            <input type="file"
+                                id="store_logo"
+                                name="store_logo"
+                                accept="image/*"
+                                class="mt-2 block w-full text-sm text-gray-700">
+
+                            <p class="mt-1 text-xs text-gray-500">
+                                Format: JPG, PNG, WEBP. Maksimal 2MB.
+                            </p>
+
+                            @error('store_logo')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
