@@ -71,6 +71,22 @@ class ReportController extends Controller
             ->limit(5)
             ->get();
 
+        $dailyPerformance = collect(range(6, 0))
+            ->map(function ($daysAgo) {
+                $date = now()->subDays($daysAgo);
+                $dayFrom = $date->copy()->startOfDay();
+                $dayTo = $date->copy()->endOfDay();
+
+                return [
+                    'label' => $date->format('d M'),
+                    'sales' => $this->calculateNetSales($dayFrom, $dayTo),
+                    'profit' => $this->calculateGrossProfit($dayFrom, $dayTo),
+                ];
+            });
+
+        $maxDailySales = max((float) $dailyPerformance->max('sales'), 1);
+        $maxDailyProfit = max((float) $dailyPerformance->max('profit'), 1);
+        
         return view('pages.owner.dashboard', [
             'netSalesToday' => $netSalesToday,
             'grossProfitToday' => $grossProfitToday,
@@ -80,6 +96,9 @@ class ReportController extends Controller
             'lowStocks' => $lowStocks,
             'recentSales' => $recentSales,
             'topProducts' => $topProducts,
+            'dailyPerformance' => $dailyPerformance,
+            'maxDailySales' => $maxDailySales,
+            'maxDailyProfit' => $maxDailyProfit,
         ]);
     }
 
