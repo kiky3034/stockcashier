@@ -1,3 +1,14 @@
+{{-- page-header.blade.php tanpa judul --}}
+@props(['title' => null, 'description' => null])
+
+{{-- Hanya tampilkan actions slot jika ada --}}
+@if (isset($actions))
+    <div class="mb-6 flex items-center justify-end gap-2">
+        {{ $actions }}
+    </div>
+@endif
+
+{{-- Flash Messages --}}
 @php
     $flashMessages = [];
 
@@ -63,7 +74,7 @@
 @endphp
 
 @if (count($flashMessages) > 0)
-    <div class="space-y-3">
+    <div class="space-y-3 mb-6">
         @foreach ($flashMessages as $flash)
             <div class="group flex items-start gap-3 rounded-2xl border px-4 py-3 shadow-sm {{ $flash['classes'] }}"
                  data-dismissible-alert>

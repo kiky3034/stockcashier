@@ -1,141 +1,258 @@
 <x-layouts.app :title="__('Sales History')">
-    <div class="p-6 space-y-6">
-        <div class="flex items-center justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Sales History</h1>
-                <p class="mt-1 text-sm text-gray-600">
-                    Riwayat transaksi penjualan.
-                </p>
-            </div>
+    <div class="space-y-6 p-4 sm:p-6 lg:p-8">
+        <x-page-header
+            title="Sales History"
+            description="Riwayat transaksi penjualan, print receipt, dan cek detail invoice."
+        >
+            <x-slot:actions>
+                {{-- Kosongkan actions karena tombol sudah dipindahkan --}}
+            </x-slot:actions>
+        </x-page-header>
 
-            <a href="{{ route('cashier.pos.index') }}"
-               class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
-                + New Sale
-            </a>
-        </div>
+        <x-flash-message />
 
-        <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div class="border-b border-gray-200 p-4">
-                <form method="GET" action="{{ route('cashier.sales.index') }}" class="flex gap-3">
-                    <input type="text"
-                           name="search"
-                           value="{{ $search }}"
-                           placeholder="Cari invoice..."
-                           class="w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
+        <x-ui.card padding="p-0" class="overflow-hidden">
+            <div class="border-b border-slate-100 bg-white p-4 sm:p-5">
+                <form method="GET" action="{{ route('cashier.sales.index') }}" class="flex flex-col gap-3 lg:flex-row lg:items-center">
+                    <div class="relative flex-1">
+                        <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.3-4.3" />
+                            </svg>
+                        </span>
 
-                    <button type="submit"
-                            class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
-                        Search
-                    </button>
+                        <input type="text"
+                               name="search"
+                               value="{{ $search }}"
+                               placeholder="Cari invoice..."
+                               class="block w-full rounded-2xl border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 shadow-sm transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100">
+                    </div>
 
-                    @if ($search)
-                        <a href="{{ route('cashier.sales.index') }}"
-                           class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                            Reset
+                    <div class="flex flex-wrap gap-2">
+                        <x-ui.button-primary type="submit">
+                            Search
+                        </x-ui.button-primary>
+
+                        @if ($search)
+                            <x-ui.link-button href="{{ route('cashier.sales.index') }}" variant="secondary">
+                                Reset
+                            </x-ui.link-button>
+                        @endif
+
+                        {{-- Tombol New Sale di sini --}}
+                        <a href="{{ route('cashier.pos.index') }}" 
+                           class="inline-flex items-center justify-center gap-1 rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                            New Sale
                         </a>
-                    @endif
+                    </div>
                 </form>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50">
+            <div class="hidden overflow-x-auto lg:block">
+                <table class="min-w-full divide-y divide-slate-100 text-sm">
+                    <thead class="bg-slate-50/80">
                         <tr>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Invoice</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Date</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Cashier</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Warehouse</th>
-                            <th class="px-4 py-3 text-right font-semibold text-gray-700">Total</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
-                            <th class="px-4 py-3 text-right font-semibold text-gray-700">Action</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold text-slate-500">Invoice</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold text-slate-500">Date</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold text-slate-500">Cashier</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold text-slate-500">Warehouse</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold text-slate-500">Total</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold text-slate-500">Status</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold text-slate-500">Action</th>
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-gray-200 bg-white">
+                    <tbody class="divide-y divide-slate-100 bg-white">
                         @forelse ($sales as $sale)
-                            <tr>
-                                <td class="px-4 py-3 font-medium text-gray-900">
-                                    {{ $sale->invoice_number }}
+                            <tr class="transition hover:bg-sky-50/40">
+                                <td class="px-3 py-3">
+                                    <div class="text-sm font-bold text-slate-900">{{ $sale->invoice_number }}</div>
                                 </td>
 
-                                <td class="px-4 py-3 text-gray-600">
+                                <td class="px-3 py-3 text-xs text-slate-600">
                                     {{ $sale->sold_at?->format('d M Y H:i') }}
-                                </td>
+                                 </td>
 
-                                <td class="px-4 py-3 text-gray-600">
+                                <td class="px-3 py-3 text-xs text-slate-600">
                                     {{ $sale->cashier->name }}
-                                </td>
+                                 </td>
 
-                                <td class="px-4 py-3 text-gray-600">
+                                <td class="px-3 py-3 text-xs text-slate-600">
                                     {{ $sale->warehouse->name }}
-                                </td>
+                                 </td>
 
-                                <td class="px-4 py-3 text-right font-semibold text-gray-900">
+                                <td class="px-3 py-3 text-sm font-bold text-slate-900">
                                     Rp {{ number_format($sale->total_amount, 0, ',', '.') }}
-                                </td>
+                                 </td>
 
-                                <td class="px-4 py-3">
+                                <td class="px-3 py-3">
                                     @if ($sale->status === 'completed')
-                                        <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                                        <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
                                             Completed
                                         </span>
                                     @elseif ($sale->status === 'partially_refunded')
-                                        <span class="rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-700">
+                                        <span class="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-100">
                                             Partial Refund
                                         </span>
                                     @elseif ($sale->status === 'refunded')
-                                        <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+                                        <span class="inline-flex rounded-full bg-sky-50 px-2 py-0.5 text-xs font-semibold text-sky-700 ring-1 ring-sky-100">
                                             Refunded
                                         </span>
                                     @elseif ($sale->status === 'voided')
-                                        <span class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+                                        <span class="inline-flex rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-red-100">
                                             Voided
                                         </span>
                                     @else
-                                        <span class="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                                        <span class="inline-flex rounded-full bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-100">
                                             {{ ucfirst($sale->status) }}
                                         </span>
                                     @endif
-                                </td>
+                                 </td>
 
-                                <td class="px-4 py-3 text-right">
-                                    <div class="flex justify-end gap-2">
+                                <td class="px-3 py-3">
+                                    <div class="flex gap-1">
                                         <button type="button"
-                                                class="copy-invoice-button rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                                                data-invoice="{{ $sale->invoice_number }}">
-                                            Copy
+                                                class="copy-invoice-button inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
+                                                data-invoice="{{ $sale->invoice_number }}"
+                                                title="Copy invoice"
+                                                aria-label="Copy invoice">
+                                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" />
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                            </svg>
                                         </button>
 
                                         <a href="{{ route('cashier.sales.receipt', $sale) }}"
                                            target="_blank"
-                                           class="print-receipt-link rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                                           data-invoice="{{ $sale->invoice_number }}">
-                                            Print
+                                           class="print-receipt-link inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
+                                           data-invoice="{{ $sale->invoice_number }}"
+                                           title="Print receipt"
+                                           aria-label="Print receipt">
+                                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M6 9V2h12v7" />
+                                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                                <path d="M6 14h12v8H6z" />
+                                            </svg>
                                         </a>
 
                                         <a href="{{ route('cashier.sales.show', $sale) }}"
-                                           class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
-                                            Detail
+                                           class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-sky-500 text-white shadow-sm transition hover:bg-sky-600"
+                                           title="Detail"
+                                           aria-label="Detail">
+                                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                                                <circle cx="12" cy="12" r="3" />
+                                            </svg>
                                         </a>
                                     </div>
-                                </td>
-                            </tr>
+                                 </td>
+                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
-                                    Belum ada transaksi.
-                                </td>
-                            </tr>
+                             <tr>
+                                <td colspan="7" class="px-3 py-10 text-center">
+                                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-500 ring-1 ring-sky-100">
+                                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 8v13H3V8" />
+                                            <path d="M1 3h22v5H1z" />
+                                            <path d="M10 12h4" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="mt-3 font-bold text-slate-900">Belum ada transaksi</h3>
+                                    <p class="mt-1 text-xs text-slate-500">Transaksi baru akan muncul di sini setelah kasir menyelesaikan penjualan.</p>
+                                 </td>
+                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
 
-            <div class="border-t border-gray-200 p-4">
+            <div class="space-y-3 p-4 lg:hidden">
+                @forelse ($sales as $sale)
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="truncate font-bold text-slate-900">{{ $sale->invoice_number }}</div>
+                                <div class="mt-1 text-xs text-slate-500">{{ $sale->sold_at?->format('d M Y H:i') }}</div>
+                            </div>
+
+                            @if ($sale->status === 'completed')
+                                <span class="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Completed</span>
+                            @elseif ($sale->status === 'partially_refunded')
+                                <span class="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-100">Partial</span>
+                            @elseif ($sale->status === 'refunded')
+                                <span class="shrink-0 rounded-full bg-sky-50 px-2 py-0.5 text-xs font-semibold text-sky-700 ring-1 ring-sky-100">Refunded</span>
+                            @elseif ($sale->status === 'voided')
+                                <span class="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-red-100">Voided</span>
+                            @else
+                                <span class="shrink-0 rounded-full bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-100">{{ ucfirst($sale->status) }}</span>
+                            @endif
+                        </div>
+
+                        <div class="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                            <div class="rounded-xl bg-slate-50 p-2">
+                                <div class="text-xs font-medium text-slate-500">Cashier</div>
+                                <div class="mt-1 font-semibold text-slate-800">{{ $sale->cashier->name }}</div>
+                            </div>
+
+                            <div class="rounded-xl bg-slate-50 p-2">
+                                <div class="text-xs font-medium text-slate-500">Warehouse</div>
+                                <div class="mt-1 font-semibold text-slate-800">{{ $sale->warehouse->name }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 flex items-center justify-between rounded-2xl bg-sky-50 px-3 py-2 ring-1 ring-sky-100">
+                            <span class="text-xs font-medium text-sky-700">Total</span>
+                            <span class="text-base font-black text-sky-700">Rp {{ number_format($sale->total_amount, 0, ',', '.') }}</span>
+                        </div>
+
+                        <div class="mt-3 grid grid-cols-3 gap-2">
+                            <button type="button"
+                                    class="copy-invoice-button inline-flex items-center justify-center rounded-xl border border-slate-200 px-2 py-1.5 text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
+                                    data-invoice="{{ $sale->invoice_number }}">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" />
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                </svg>
+                            </button>
+
+                            <a href="{{ route('cashier.sales.receipt', $sale) }}"
+                               target="_blank"
+                               class="print-receipt-link inline-flex items-center justify-center rounded-xl border border-slate-200 px-2 py-1.5 text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
+                               data-invoice="{{ $sale->invoice_number }}">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 9V2h12v7" />
+                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                    <path d="M6 14h12v8H6z" />
+                                </svg>
+                            </a>
+
+                            <a href="{{ route('cashier.sales.show', $sale) }}"
+                               class="inline-flex items-center justify-center rounded-xl bg-sky-500 px-2 py-1.5 text-white shadow-sm transition hover:bg-sky-600">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                @empty
+                    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                        <h3 class="font-bold text-slate-900">Belum ada transaksi</h3>
+                        <p class="mt-1 text-xs text-slate-500">Mulai transaksi baru dari halaman POS.</p>
+                    </div>
+                @endforelse
+            </div>
+
+            <div class="border-t border-slate-100 bg-white p-4 sm:p-5">
                 {{ $sales->links() }}
             </div>
-        </div>
+        </x-ui.card>
     </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             function notifyToast(icon, title) {
@@ -145,7 +262,15 @@
                 }
 
                 if (window.Swal) {
-                    Swal.fire({ icon, title, timer: 1800, showConfirmButton: false });
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: icon,
+                        title: title,
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                    });
                 }
             }
 
@@ -168,9 +293,13 @@
 
             document.querySelectorAll('.print-receipt-link').forEach(function (link) {
                 link.addEventListener('click', function () {
-                    notifyToast('info', 'Membuka receipt untuk invoice ' + (link.dataset.invoice || ''));
+                    notifyToast('info', 'Membuka receipt ' + (link.dataset.invoice || ''));
                 });
             });
+
+            @if ($search)
+                notifyToast('info', 'Filter invoice aktif');
+            @endif
         });
     </script>
 </x-layouts.app>
