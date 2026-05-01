@@ -105,10 +105,18 @@
                                 </td>
 
                                 <td class="px-4 py-3 text-right">
-                                    <a href="{{ route('cashier.sales.show', $sale) }}"
-                                       class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
-                                        Detail
-                                    </a>
+                                    <div class="flex justify-end gap-2">
+                                        <a href="{{ route('cashier.sales.receipt', $sale) }}"
+                                        target="_blank"
+                                        class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                            Print
+                                        </a>
+
+                                        <a href="{{ route('cashier.sales.show', $sale) }}"
+                                        class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                            Detail
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty

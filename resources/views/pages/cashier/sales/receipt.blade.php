@@ -1,3 +1,13 @@
+@php
+    $paperSize = $settings['receipt_paper_size'] ?? '80mm';
+    $receiptWidth = $paperSize === '58mm' ? '58mm' : '80mm';
+    $showLogo = ($settings['receipt_show_logo'] ?? 'true') === 'true';
+    $autoPrint = ($settings['receipt_auto_print'] ?? 'false') === 'true';
+    $currency = $settings['currency_prefix'] ?? 'Rp';
+
+    $payment = $sale->payments->first();
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,28 +17,45 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
+        @page {
+            size: {{ $receiptWidth }} auto;
+            margin: 0;
+        }
+
         @media print {
+            html,
+            body {
+                width: {{ $receiptWidth }};
+                background: white !important;
+            }
+
             .no-print {
                 display: none !important;
             }
 
-            body {
-                background: white !important;
-            }
-
             .receipt {
+                width: {{ $receiptWidth }} !important;
+                max-width: {{ $receiptWidth }} !important;
+                margin: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
             }
         }
 
         .receipt {
-            width: 80mm;
-            max-width: 80mm;
+            width: {{ $receiptWidth }};
+            max-width: {{ $receiptWidth }};
             margin: 0 auto;
+            font-size: {{ $paperSize === '58mm' ? '11px' : '12px' }};
+            line-height: 1.35;
+        }
+
+        .dashed-line {
+            border-top: 1px dashed #9ca3af;
         }
     </style>
 </head>
+
 <body class="bg-gray-100 text-gray-900">
     <div class="no-print mx-auto my-6 flex max-w-sm justify-center gap-2">
         <button onclick="window.print()"
@@ -42,131 +69,163 @@
         </a>
     </div>
 
-    <div class="receipt bg-white p-4 text-sm shadow-sm">
+    <div class="receipt bg-white p-3 shadow-sm">
         <div class="text-center">
-            @if (! empty($settings['store_logo']))
+            @if ($showLogo && ! empty($settings['store_logo']))
                 <div class="mb-2 flex justify-center">
                     <img src="{{ asset('storage/' . $settings['store_logo']) }}"
-                        alt="Store Logo"
-                        class="h-14 w-14 object-contain">
+                         alt="Store Logo"
+                         class="{{ $paperSize === '58mm' ? 'h-10 w-10' : 'h-14 w-14' }} object-contain">
                 </div>
             @endif
 
-            <h1 class="text-lg font-bold">{{ $settings['store_name'] ?? 'StockCashier Store' }}</h1>
+            <h1 class="font-bold {{ $paperSize === '58mm' ? 'text-sm' : 'text-base' }}">
+                {{ $settings['store_name'] ?? 'StockCashier Store' }}
+            </h1>
 
             @if (! empty($settings['store_address']))
-                <p class="text-xs text-gray-600">{{ $settings['store_address'] }}</p>
+                <p class="text-gray-600">{{ $settings['store_address'] }}</p>
             @endif
 
             @if (! empty($settings['store_phone']))
-                <p class="text-xs text-gray-600">Telp: {{ $settings['store_phone'] }}</p>
+                <p class="text-gray-600">Telp: {{ $settings['store_phone'] }}</p>
             @endif
 
             @if (! empty($settings['store_email']))
-                <p class="text-xs text-gray-600">{{ $settings['store_email'] }}</p>
+                <p class="text-gray-600">{{ $settings['store_email'] }}</p>
             @endif
-
-            <p class="mt-1 text-xs text-gray-600">Sales Receipt</p>
         </div>
 
-        <div class="my-3 border-t border-dashed border-gray-400"></div>
+        <div class="my-2 dashed-line"></div>
 
-        <div class="space-y-1 text-xs">
-            <div class="flex justify-between">
+        <div class="space-y-1">
+            <div class="flex justify-between gap-2">
                 <span>Invoice</span>
-                <span>{{ $sale->invoice_number }}</span>
+                <span class="text-right">{{ $sale->invoice_number }}</span>
             </div>
 
-            <div class="flex justify-between">
+            <div class="flex justify-between gap-2">
                 <span>Date</span>
-                <span>{{ $sale->sold_at?->format('d/m/Y H:i') }}</span>
+                <span class="text-right">{{ $sale->sold_at?->format('d/m/Y H:i') }}</span>
             </div>
 
-            <div class="flex justify-between">
+            <div class="flex justify-between gap-2">
                 <span>Cashier</span>
-                <span>{{ $sale->cashier->name }}</span>
+                <span class="text-right">{{ $sale->cashier->name }}</span>
             </div>
 
-            <div class="flex justify-between">
+            <div class="flex justify-between gap-2">
                 <span>Warehouse</span>
-                <span>{{ $sale->warehouse->name }}</span>
+                <span class="text-right">{{ $sale->warehouse->name }}</span>
             </div>
 
-            <div class="flex justify-between">
+            <div class="flex justify-between gap-2">
                 <span>Status</span>
-                <span>{{ strtoupper($sale->status) }}</span>
+                <span class="text-right">{{ strtoupper(str_replace('_', ' ', $sale->status)) }}</span>
             </div>
         </div>
 
-        <div class="my-3 border-t border-dashed border-gray-400"></div>
+        <div class="my-2 dashed-line"></div>
 
         <div class="space-y-2">
             @foreach ($sale->items as $item)
                 <div>
-                    <div class="font-medium">{{ $item->product_name }}</div>
+                    <div class="font-semibold">
+                        {{ $item->product_name }}
+                    </div>
 
-                    <div class="flex justify-between text-xs text-gray-600">
+                    <div class="text-gray-600">
+                        SKU: {{ $item->sku }}
+                    </div>
+
+                    <div class="flex justify-between gap-2">
                         <span>
                             {{ number_format($item->quantity, 2, ',', '.') }}
                             {{ $item->unit_name }}
-                            x Rp {{ number_format($item->unit_price, 0, ',', '.') }}
+                            x {{ $currency }} {{ number_format($item->unit_price, 0, ',', '.') }}
                         </span>
 
-                        <span>
-                            Rp {{ number_format($item->subtotal, 0, ',', '.') }}
+                        <span class="text-right">
+                            {{ $currency }} {{ number_format($item->subtotal, 0, ',', '.') }}
                         </span>
                     </div>
                 </div>
             @endforeach
         </div>
 
-        <div class="my-3 border-t border-dashed border-gray-400"></div>
+        <div class="my-2 dashed-line"></div>
 
-        <div class="space-y-1 text-xs">
+        <div class="space-y-1">
             <div class="flex justify-between">
                 <span>Subtotal</span>
-                <span>Rp {{ number_format($sale->subtotal, 0, ',', '.') }}</span>
+                <span>{{ $currency }} {{ number_format($sale->subtotal, 0, ',', '.') }}</span>
             </div>
 
             <div class="flex justify-between">
                 <span>Discount</span>
-                <span>Rp {{ number_format($sale->discount_amount, 0, ',', '.') }}</span>
+                <span>{{ $currency }} {{ number_format($sale->discount_amount, 0, ',', '.') }}</span>
             </div>
 
             <div class="flex justify-between">
                 <span>Tax</span>
-                <span>Rp {{ number_format($sale->tax_amount, 0, ',', '.') }}</span>
+                <span>{{ $currency }} {{ number_format($sale->tax_amount, 0, ',', '.') }}</span>
             </div>
 
-            <div class="flex justify-between border-t border-dashed border-gray-400 pt-2 text-sm font-bold">
+            <div class="my-2 dashed-line"></div>
+
+            <div class="flex justify-between font-bold">
                 <span>Total</span>
-                <span>Rp {{ number_format($sale->total_amount, 0, ',', '.') }}</span>
+                <span>{{ $currency }} {{ number_format($sale->total_amount, 0, ',', '.') }}</span>
             </div>
 
             <div class="flex justify-between">
                 <span>Paid</span>
-                <span>Rp {{ number_format($sale->paid_amount, 0, ',', '.') }}</span>
+                <span>{{ $currency }} {{ number_format($sale->paid_amount, 0, ',', '.') }}</span>
             </div>
 
             <div class="flex justify-between">
                 <span>Change</span>
-                <span>Rp {{ number_format($sale->change_amount, 0, ',', '.') }}</span>
+                <span>{{ $currency }} {{ number_format($sale->change_amount, 0, ',', '.') }}</span>
             </div>
+
+            @if ($payment)
+                <div class="flex justify-between">
+                    <span>Payment</span>
+                    <span>{{ strtoupper($payment->method) }}</span>
+                </div>
+
+                @if ($payment->reference_number)
+                    <div class="flex justify-between gap-2">
+                        <span>Ref</span>
+                        <span class="text-right">{{ $payment->reference_number }}</span>
+                    </div>
+                @endif
+            @endif
         </div>
 
-        <div class="my-3 border-t border-dashed border-gray-400"></div>
+        @if ($sale->notes)
+            <div class="my-2 dashed-line"></div>
 
-        <div class="text-center text-xs text-gray-600">
+            <div>
+                <div class="font-semibold">Notes</div>
+                <div>{{ $sale->notes }}</div>
+            </div>
+        @endif
+
+        <div class="my-2 dashed-line"></div>
+
+        <div class="text-center text-gray-600">
             <p>{{ $settings['receipt_footer'] ?? 'Terima kasih sudah berbelanja.' }}</p>
-            <p>Barang yang sudah dibeli tidak dapat dikembalikan tanpa struk.</p>
+            <p class="mt-1">Barang yang sudah dibeli tidak dapat dikembalikan tanpa struk.</p>
         </div>
     </div>
 
-    <script>
-        window.addEventListener('load', function () {
-            // Aktifkan baris ini kalau ingin auto print saat halaman dibuka.
-            // window.print();
-        });
-    </script>
+    @if ($autoPrint)
+        <script>
+            window.addEventListener('load', function () {
+                window.print();
+            });
+        </script>
+    @endif
 </body>
 </html>

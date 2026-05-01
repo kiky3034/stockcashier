@@ -20,6 +20,9 @@ class AppSettingSeeder extends Seeder
             'store_logo' => null,
             'receipt_footer' => 'Terima kasih sudah berbelanja.',
             'currency_prefix' => 'Rp',
+            'receipt_paper_size' => '80mm',
+            'receipt_auto_print' => 'false',
+            'receipt_show_logo' => 'true',
         ];
 
         foreach ($settings as $key => $value) {

@@ -22,6 +22,9 @@ class AppSettingController extends Controller
             'store_logo' => null,
             'receipt_footer' => 'Terima kasih sudah berbelanja.',
             'currency_prefix' => 'Rp',
+            'receipt_paper_size' => '80mm',
+            'receipt_auto_print' => 'false',
+            'receipt_show_logo' => 'true',
         ]);
 
         return view('pages.admin.settings.edit', [
@@ -39,6 +42,9 @@ class AppSettingController extends Controller
             'store_logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'receipt_footer' => ['nullable', 'string', 'max:1000'],
             'currency_prefix' => ['required', 'string', 'max:10'],
+            'receipt_paper_size' => ['required', 'in:58mm,80mm'],
+            'receipt_auto_print' => ['nullable', 'boolean'],
+            'receipt_show_logo' => ['nullable', 'boolean'],
         ]);
 
         $oldSettings = AppSetting::values();
@@ -53,6 +59,9 @@ class AppSettingController extends Controller
         } else {
             unset($validated['store_logo']);
         }
+
+        $validated['receipt_auto_print'] = $request->boolean('receipt_auto_print') ? 'true' : 'false';
+        $validated['receipt_show_logo'] = $request->boolean('receipt_show_logo') ? 'true' : 'false';
 
         foreach ($validated as $key => $value) {
             AppSetting::setValue($key, $value);

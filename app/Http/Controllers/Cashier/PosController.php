@@ -9,6 +9,7 @@ use App\Services\SaleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Models\AppSetting;
 
 class PosController extends Controller
 {
@@ -68,6 +69,14 @@ class PosController extends Controller
         ]);
 
         $sale = $saleService->createSale($validated, $request->user());
+
+        $autoPrint = AppSetting::valueFor('receipt_auto_print', 'false') === 'true';
+
+        if ($autoPrint) {
+            return redirect()
+                ->route('cashier.sales.receipt', $sale)
+                ->with('success', 'Transaksi berhasil disimpan.');
+        }
 
         return redirect()
             ->route('cashier.sales.show', $sale)

@@ -138,6 +138,61 @@
                         @enderror
                     </div>
 
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                        <h2 class="font-semibold text-gray-900">Receipt Settings</h2>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Atur ukuran struk dan perilaku print.
+                        </p>
+
+                        <div class="mt-4 grid gap-5 md:grid-cols-2">
+                            <div>
+                                <label for="receipt_paper_size" class="block text-sm font-medium text-gray-700">
+                                    Receipt Paper Size
+                                </label>
+
+                                <select id="receipt_paper_size"
+                                        name="receipt_paper_size"
+                                        class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
+                                    <option value="80mm" @selected(old('receipt_paper_size', $settings['receipt_paper_size'] ?? '80mm') === '80mm')>
+                                        80mm Thermal Paper
+                                    </option>
+                                    <option value="58mm" @selected(old('receipt_paper_size', $settings['receipt_paper_size'] ?? '80mm') === '58mm')>
+                                        58mm Thermal Paper
+                                    </option>
+                                </select>
+
+                                @error('receipt_paper_size')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="space-y-3 pt-6">
+                                <label class="flex items-center gap-2">
+                                    <input type="checkbox"
+                                        name="receipt_auto_print"
+                                        value="1"
+                                        class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                                        @checked(old('receipt_auto_print', ($settings['receipt_auto_print'] ?? 'false') === 'true'))>
+
+                                    <span class="text-sm text-gray-700">
+                                        Auto print receipt when opened
+                                    </span>
+                                </label>
+
+                                <label class="flex items-center gap-2">
+                                    <input type="checkbox"
+                                        name="receipt_show_logo"
+                                        value="1"
+                                        class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                                        @checked(old('receipt_show_logo', ($settings['receipt_show_logo'] ?? 'true') === 'true'))>
+
+                                    <span class="text-sm text-gray-700">
+                                        Show logo on receipt
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex items-center justify-end gap-3 border-t border-gray-200 pt-5">
                         <a href="{{ route('admin.dashboard') }}"
                            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">

@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Sale;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
+use App\Services\ActivityLogService;
 use App\Services\SaleService;
 use Illuminate\Http\RedirectResponse;
-use App\Models\AppSetting;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class SaleController extends Controller
 {
@@ -47,7 +48,7 @@ class SaleController extends Controller
         ]);
     }
 
-    public function receipt(Sale $sale, Request $request): View
+    public function receipt(Sale $sale, Request $request, ActivityLogService $activityLog): View
     {
         if ($request->user()->hasRole('cashier') && ! $request->user()->hasRole('admin')) {
             abort_if($sale->cashier_id !== $request->user()->id, 403);
@@ -55,16 +56,33 @@ class SaleController extends Controller
 
         $sale->load(['items.product', 'payments', 'cashier', 'warehouse']);
 
+        $settings = AppSetting::values([
+            'store_name' => 'StockCashier Store',
+            'store_address' => '',
+            'store_phone' => '',
+            'store_email' => '',
+            'store_logo' => null,
+            'receipt_footer' => 'Terima kasih sudah berbelanja.',
+            'currency_prefix' => 'Rp',
+            'receipt_paper_size' => '80mm',
+            'receipt_auto_print' => 'false',
+            'receipt_show_logo' => 'true',
+        ]);
+
+        $activityLog->log(
+            event: 'receipt_viewed',
+            description: 'Receipt dibuka: ' . $sale->invoice_number,
+            subject: $sale,
+            properties: [
+                'invoice_number' => $sale->invoice_number,
+                'receipt_paper_size' => $settings['receipt_paper_size'] ?? '80mm',
+            ],
+            user: $request->user(),
+        );
+
         return view('pages.cashier.sales.receipt', [
             'sale' => $sale,
-            'settings' => AppSetting::values([
-                'store_name' => 'StockCashier Store',
-                'store_address' => '',
-                'store_phone' => '',
-                'store_email' => '',
-                'receipt_footer' => 'Terima kasih sudah berbelanja.',
-                'currency_prefix' => 'Rp',
-            ]),
+            'settings' => $settings,
         ]);
     }
 
