@@ -14,18 +14,6 @@
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if (session('error'))
-            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {{ session('error') }}
-            </div>
-        @endif
-
         <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 p-4">
                 <form method="GET" action="{{ route('admin.suppliers.index') }}" class="flex gap-3">
@@ -98,6 +86,24 @@
 
                                 <td class="px-4 py-3">
                                     <div class="flex justify-end gap-2">
+                                        <button type="button"
+                                                data-supplier-detail
+                                                data-name="{{ e($supplier->name) }}"
+                                                data-phone="{{ e($supplier->phone ?? '-') }}"
+                                                data-email="{{ e($supplier->email ?? '-') }}"
+                                                data-address="{{ e($supplier->address ?? '-') }}"
+                                                data-status="{{ $supplier->is_active ? 'Active' : 'Inactive' }}"
+                                                class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                            Detail
+                                        </button>
+
+                                        <button type="button"
+                                                data-copy-supplier
+                                                data-copy-text="{{ e($supplier->name . ' | Phone: ' . ($supplier->phone ?? '-') . ' | Email: ' . ($supplier->email ?? '-')) }}"
+                                                class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                            Copy
+                                        </button>
+
                                         <a href="{{ route('admin.suppliers.edit', $supplier) }}"
                                            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
                                             Edit
@@ -105,7 +111,11 @@
 
                                         <form method="POST"
                                               action="{{ route('admin.suppliers.destroy', $supplier) }}"
-                                              onsubmit="return confirm('Yakin ingin menghapus supplier ini?')">
+                                              data-confirm-submit
+                                              data-confirm-title="Hapus supplier?"
+                                              data-confirm-text="Supplier {{ $supplier->name }} akan dihapus jika belum digunakan dalam produk atau purchase."
+                                              data-confirm-button="Ya, hapus"
+                                              data-confirm-icon="warning">
                                             @csrf
                                             @method('DELETE')
 
@@ -133,4 +143,67 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const showToast = function (icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: icon,
+                        title: title,
+                        timer: 1800,
+                        showConfirmButton: false
+                    });
+                }
+            };
+
+            document.querySelectorAll('[data-copy-supplier]').forEach(function (button) {
+                button.addEventListener('click', async function () {
+                    const text = button.dataset.copyText || '';
+
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        showToast('success', 'Data supplier disalin');
+                    } catch (error) {
+                        showToast('error', 'Gagal menyalin data supplier');
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-supplier-detail]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const name = button.dataset.name || '-';
+                    const phone = button.dataset.phone || '-';
+                    const email = button.dataset.email || '-';
+                    const address = button.dataset.address || '-';
+                    const status = button.dataset.status || '-';
+
+                    if (!window.Swal) {
+                        alert(`${name}\nPhone: ${phone}\nEmail: ${email}\nStatus: ${status}`);
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: name,
+                        html: `
+                            <div class="text-left text-sm">
+                                <div class="mb-2"><strong>Phone:</strong> ${phone}</div>
+                                <div class="mb-2"><strong>Email:</strong> ${email}</div>
+                                <div class="mb-2"><strong>Status:</strong> ${status}</div>
+                                <div><strong>Address:</strong><br>${address}</div>
+                            </div>
+                        `,
+                        icon: 'info',
+                        confirmButtonText: 'Tutup',
+                        confirmButtonColor: '#111827'
+                    });
+                });
+            });
+        });
+    </script>
 </x-layouts.app>

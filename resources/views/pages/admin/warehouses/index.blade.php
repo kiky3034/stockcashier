@@ -14,18 +14,6 @@
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if (session('error'))
-            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {{ session('error') }}
-            </div>
-        @endif
-
         <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 p-4">
                 <form method="GET" action="{{ route('admin.warehouses.index') }}" class="flex gap-3">
@@ -77,7 +65,15 @@
                                 </td>
 
                                 <td class="px-4 py-3 text-gray-600">
-                                    {{ $warehouse->code }}
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono">{{ $warehouse->code }}</span>
+
+                                        <button type="button"
+                                                class="rounded border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                                                data-copy-warehouse-code="{{ $warehouse->code }}">
+                                            Copy
+                                        </button>
+                                    </div>
                                 </td>
 
                                 <td class="px-4 py-3">
@@ -106,6 +102,17 @@
 
                                 <td class="px-4 py-3">
                                     <div class="flex justify-end gap-2">
+                                        <button type="button"
+                                                class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                                data-warehouse-detail
+                                                data-name="{{ $warehouse->name }}"
+                                                data-code="{{ $warehouse->code }}"
+                                                data-address="{{ $warehouse->address ?: '-' }}"
+                                                data-default="{{ $warehouse->is_default ? 'Yes' : 'No' }}"
+                                                data-status="{{ $warehouse->is_active ? 'Active' : 'Inactive' }}">
+                                            Detail
+                                        </button>
+
                                         <a href="{{ route('admin.warehouses.edit', $warehouse) }}"
                                            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
                                             Edit
@@ -113,7 +120,11 @@
 
                                         <form method="POST"
                                               action="{{ route('admin.warehouses.destroy', $warehouse) }}"
-                                              onsubmit="return confirm('Yakin ingin menghapus warehouse ini?')">
+                                              data-confirm-submit
+                                              data-confirm-title="Hapus warehouse?"
+                                              data-confirm-text="Warehouse {{ $warehouse->name }} akan dihapus jika belum digunakan transaksi/stok."
+                                              data-confirm-button="Ya, hapus"
+                                              data-confirm-icon="warning">
                                             @csrf
                                             @method('DELETE')
 
@@ -141,4 +152,65 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function fireToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({ icon, title, timer: 2200, showConfirmButton: false });
+                }
+            }
+
+            function escapeHtml(value) {
+                return String(value ?? '')
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            document.querySelectorAll('[data-copy-warehouse-code]').forEach(function (button) {
+                button.addEventListener('click', async function () {
+                    const code = button.dataset.copyWarehouseCode;
+
+                    try {
+                        await navigator.clipboard.writeText(code);
+                        fireToast('success', 'Kode warehouse disalin.');
+                    } catch (error) {
+                        fireToast('error', 'Gagal menyalin kode warehouse.');
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-warehouse-detail]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const html = `
+                        <div class="text-left text-sm">
+                            <div class="mb-2"><strong>Name:</strong> ${escapeHtml(button.dataset.name)}</div>
+                            <div class="mb-2"><strong>Code:</strong> <code>${escapeHtml(button.dataset.code)}</code></div>
+                            <div class="mb-2"><strong>Address:</strong> ${escapeHtml(button.dataset.address)}</div>
+                            <div class="mb-2"><strong>Default:</strong> ${escapeHtml(button.dataset.default)}</div>
+                            <div><strong>Status:</strong> ${escapeHtml(button.dataset.status)}</div>
+                        </div>
+                    `;
+
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Warehouse Detail',
+                            html: html,
+                            icon: 'info',
+                            confirmButtonText: 'Tutup',
+                            confirmButtonColor: '#111827'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
 </x-layouts.app>

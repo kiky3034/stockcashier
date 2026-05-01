@@ -1,4 +1,10 @@
 <x-layouts.app :title="__('Stocks')">
+    @php
+        $lowStockCountOnPage = $stocks->getCollection()
+            ->filter(fn ($stock) => (float) $stock->quantity <= (float) $stock->product->stock_alert_level)
+            ->count();
+    @endphp
+
     <div class="p-6 space-y-6">
         <div class="flex items-center justify-between gap-4">
             <div>
@@ -56,11 +62,27 @@
                             <th class="px-4 py-3 text-left font-semibold text-gray-700">Category</th>
                             <th class="px-4 py-3 text-right font-semibold text-gray-700">Quantity</th>
                             <th class="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
+                            <th class="px-4 py-3 text-right font-semibold text-gray-700">Action</th>
                         </tr>
                     </thead>
 
                     <tbody class="divide-y divide-gray-200 bg-white">
                         @forelse ($stocks as $stock)
+                            @php
+                                $isLowStock = (float) $stock->quantity <= (float) $stock->product->stock_alert_level;
+                                $stockDetail = [
+                                    'product' => $stock->product->name,
+                                    'sku' => $stock->product->sku,
+                                    'barcode' => $stock->product->barcode ?: '-',
+                                    'warehouse' => $stock->warehouse->name,
+                                    'category' => $stock->product->category?->name ?? '-',
+                                    'quantity' => number_format($stock->quantity, 2, ',', '.'),
+                                    'unit' => $stock->product->unit?->abbreviation ?? '',
+                                    'alert_level' => number_format($stock->product->stock_alert_level, 2, ',', '.'),
+                                    'status' => $isLowStock ? 'Low Stock' : 'Safe',
+                                ];
+                            @endphp
+
                             <tr>
                                 <td class="px-4 py-3">
                                     <div class="font-medium text-gray-900">
@@ -68,6 +90,10 @@
                                     </div>
                                     <div class="mt-1 text-xs text-gray-500">
                                         SKU: {{ $stock->product->sku }}
+                                    </div>
+                                    <div class="mt-1 text-xs text-gray-500">
+                                        Barcode:
+                                        <span class="font-mono">{{ $stock->product->barcode ?: '-' }}</span>
                                     </div>
                                 </td>
 
@@ -85,7 +111,7 @@
                                 </td>
 
                                 <td class="px-4 py-3">
-                                    @if ($stock->quantity <= $stock->product->stock_alert_level)
+                                    @if ($isLowStock)
                                         <span class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
                                             Low Stock
                                         </span>
@@ -95,10 +121,18 @@
                                         </span>
                                     @endif
                                 </td>
+
+                                <td class="px-4 py-3 text-right">
+                                    <button type="button"
+                                            class="stock-detail-button rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                            data-stock-detail="{{ base64_encode(json_encode($stockDetail)) }}">
+                                        Detail
+                                    </button>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
                                     Belum ada data stok.
                                 </td>
                             </tr>
@@ -112,4 +146,95 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const lowStockCountOnPage = {{ $lowStockCountOnPage }};
+
+            function showToast(options) {
+                if (window.Toast) {
+                    Toast.fire(options);
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: options.icon || 'info',
+                        title: options.title || '',
+                        timer: 2200,
+                        showConfirmButton: false
+                    });
+                }
+            }
+
+            function escapeHtml(value) {
+                return String(value ?? '')
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            if (lowStockCountOnPage > 0) {
+                showToast({
+                    icon: 'warning',
+                    title: `${lowStockCountOnPage} item low stock di halaman ini`
+                });
+            }
+
+            document.querySelectorAll('.stock-detail-button').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const detail = JSON.parse(atob(button.dataset.stockDetail));
+                    const statusClass = detail.status === 'Low Stock' ? 'text-red-700' : 'text-green-700';
+
+                    const html = `
+                        <div class="text-left text-sm">
+                            <div class="rounded-lg bg-gray-50 p-4">
+                                <div class="font-semibold text-gray-900">${escapeHtml(detail.product)}</div>
+                                <div class="mt-1 text-xs text-gray-500">SKU: ${escapeHtml(detail.sku)}</div>
+                                <div class="mt-1 text-xs text-gray-500">Barcode: <span class="font-mono">${escapeHtml(detail.barcode)}</span></div>
+                            </div>
+
+                            <div class="mt-4 grid gap-3 text-sm">
+                                <div class="flex justify-between gap-3">
+                                    <span class="text-gray-500">Warehouse</span>
+                                    <span class="font-medium text-gray-900">${escapeHtml(detail.warehouse)}</span>
+                                </div>
+                                <div class="flex justify-between gap-3">
+                                    <span class="text-gray-500">Category</span>
+                                    <span class="font-medium text-gray-900">${escapeHtml(detail.category)}</span>
+                                </div>
+                                <div class="flex justify-between gap-3">
+                                    <span class="text-gray-500">Quantity</span>
+                                    <span class="font-medium text-gray-900">${escapeHtml(detail.quantity)} ${escapeHtml(detail.unit)}</span>
+                                </div>
+                                <div class="flex justify-between gap-3">
+                                    <span class="text-gray-500">Alert Level</span>
+                                    <span class="font-medium text-gray-900">${escapeHtml(detail.alert_level)} ${escapeHtml(detail.unit)}</span>
+                                </div>
+                                <div class="flex justify-between gap-3">
+                                    <span class="text-gray-500">Status</span>
+                                    <span class="font-semibold ${statusClass}">${escapeHtml(detail.status)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'Stock Detail',
+                            html: html,
+                            confirmButtonText: 'Tutup',
+                            confirmButtonColor: '#111827',
+                            width: 520
+                        });
+                        return;
+                    }
+
+                    alert(`${detail.product}\nStock: ${detail.quantity} ${detail.unit}\nStatus: ${detail.status}`);
+                });
+            });
+        });
+    </script>
 </x-layouts.app>

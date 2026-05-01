@@ -9,7 +9,12 @@
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.warehouses.update', $warehouse) }}" class="space-y-5">
+                <form method="POST" action="{{ route('admin.warehouses.update', $warehouse) }}" class="space-y-5"
+                      data-confirm-submit
+                      data-confirm-title="Update warehouse?"
+                      data-confirm-text="Perubahan data warehouse akan disimpan."
+                      data-confirm-button="Ya, update"
+                      data-confirm-icon="question">
                     @csrf
                     @method('PUT')
 
@@ -36,6 +41,7 @@
                         <input type="text"
                                id="code"
                                name="code"
+                               autocomplete="off"
                                value="{{ old('code', $warehouse->code) }}"
                                class="mt-1 w-full rounded-lg border-gray-300 text-sm uppercase focus:border-gray-900 focus:ring-gray-900">
 
@@ -62,6 +68,7 @@
                         <label class="flex items-center gap-2">
                             <input type="checkbox"
                                    name="is_default"
+                                   id="is_default"
                                    value="1"
                                    class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                                    @checked(old('is_default', $warehouse->is_default))>
@@ -76,6 +83,7 @@
                         <label class="flex items-center gap-2">
                             <input type="checkbox"
                                    name="is_active"
+                                   id="is_active"
                                    value="1"
                                    class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                                    @checked(old('is_active', $warehouse->is_active))>
@@ -103,4 +111,48 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const codeInput = document.getElementById('code');
+            const defaultCheckbox = document.getElementById('is_default');
+            const activeCheckbox = document.getElementById('is_active');
+
+            function fireToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({ icon, title, timer: 2200, showConfirmButton: false });
+                }
+            }
+
+            if (codeInput) {
+                codeInput.addEventListener('input', function () {
+                    codeInput.value = codeInput.value.toUpperCase().replace(/\s+/g, '-');
+                });
+            }
+
+            if (defaultCheckbox) {
+                defaultCheckbox.addEventListener('change', function () {
+                    if (defaultCheckbox.checked) {
+                        fireToast('info', 'Warehouse ini akan dijadikan default.');
+                    } else {
+                        fireToast('warning', 'Warehouse ini tidak lagi ditandai default.');
+                    }
+                });
+            }
+
+            if (activeCheckbox) {
+                activeCheckbox.addEventListener('change', function () {
+                    fireToast(
+                        activeCheckbox.checked ? 'success' : 'warning',
+                        activeCheckbox.checked ? 'Warehouse akan aktif.' : 'Warehouse akan nonaktif.'
+                    );
+                });
+            }
+        });
+    </script>
 </x-layouts.app>

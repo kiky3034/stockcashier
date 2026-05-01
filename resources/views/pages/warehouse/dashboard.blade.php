@@ -1,14 +1,24 @@
 <x-layouts.app :title="__('Warehouse Dashboard')">
     <div class="p-6 space-y-6">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Warehouse Dashboard</h1>
-            <p class="mt-2 text-gray-600">
-                Kelola produk, stok, stock adjustment, dan barang masuk.
-            </p>
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Warehouse Dashboard</h1>
+                <p class="mt-2 text-gray-600">
+                    Kelola produk, stok, stock adjustment, dan barang masuk.
+                </p>
+            </div>
+
+            <button type="button"
+                    id="warehouseGuideButton"
+                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                Panduan Gudang
+            </button>
         </div>
 
         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <a href="{{ route('admin.products.index') }}"
+               data-dashboard-link
+               data-toast-title="Membuka Products"
                class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:bg-gray-50 transition-all hover:shadow-md">
                 <div class="flex items-center gap-3">
                     <div class="rounded-lg bg-blue-100 p-3">
@@ -24,6 +34,8 @@
             </a>
 
             <a href="{{ route('admin.stocks.index') }}"
+               data-dashboard-link
+               data-toast-title="Membuka Stocks"
                class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:bg-gray-50 transition-all hover:shadow-md">
                 <div class="flex items-center gap-3">
                     <div class="rounded-lg bg-green-100 p-3">
@@ -39,6 +51,8 @@
             </a>
 
             <a href="{{ route('admin.stock-movements.index') }}"
+               data-dashboard-link
+               data-toast-title="Membuka Stock Movements"
                class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:bg-gray-50 transition-all hover:shadow-md">
                 <div class="flex items-center gap-3">
                     <div class="rounded-lg bg-purple-100 p-3">
@@ -54,6 +68,8 @@
             </a>
 
             <a href="{{ route('admin.purchases.create') }}"
+               data-dashboard-link
+               data-toast-title="Membuka New Purchase"
                class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:bg-gray-50 transition-all hover:shadow-md">
                 <div class="flex items-center gap-3">
                     <div class="rounded-lg bg-orange-100 p-3">
@@ -69,4 +85,42 @@
             </a>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const guideButton = document.getElementById('warehouseGuideButton');
+
+            if (guideButton && window.Swal) {
+                guideButton.addEventListener('click', function () {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Panduan Warehouse Staff',
+                        html: `
+                            <div class="text-left text-sm leading-6">
+                                <ol class="list-decimal space-y-2 pl-5">
+                                    <li><strong>Products</strong>: cek data produk, SKU, barcode, harga, dan status aktif.</li>
+                                    <li><strong>Stocks</strong>: pantau stok per warehouse dan item yang menipis.</li>
+                                    <li><strong>Stock Movements</strong>: cek riwayat stok masuk dan keluar.</li>
+                                    <li><strong>New Purchase</strong>: input barang masuk dari supplier.</li>
+                                </ol>
+                            </div>
+                        `,
+                        confirmButtonText: 'Mengerti',
+                        confirmButtonColor: '#111827'
+                    });
+                });
+            }
+
+            document.querySelectorAll('[data-dashboard-link]').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    if (window.Toast) {
+                        Toast.fire({
+                            icon: 'info',
+                            title: link.dataset.toastTitle || 'Membuka halaman'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
 </x-layouts.app>

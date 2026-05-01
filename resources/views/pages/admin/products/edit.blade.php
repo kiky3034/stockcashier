@@ -9,7 +9,15 @@
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data" class="space-y-6">
+                <form method="POST"
+                      action="{{ route('admin.products.update', $product) }}"
+                      enctype="multipart/form-data"
+                      class="space-y-6"
+                      data-confirm-submit
+                      data-confirm-title="Update produk?"
+                      data-confirm-text="Perubahan data produk dan stok warehouse akan disimpan."
+                      data-confirm-button="Ya, update"
+                      data-confirm-icon="question">
                     @csrf
                     @method('PUT')
 

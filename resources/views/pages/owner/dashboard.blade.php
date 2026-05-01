@@ -9,6 +9,18 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
+                <button type="button"
+                        id="ownerDashboardSummaryButton"
+                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                    Summary
+                </button>
+
+                <button type="button"
+                        id="copyOwnerDashboardSummaryButton"
+                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                    Copy Summary
+                </button>
+
                 <a href="{{ route('owner.reports.sales') }}"
                 class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                     Sales Report
@@ -260,6 +272,7 @@
                                 <th class="px-4 py-3 text-left font-semibold text-gray-700">Product</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-700">Warehouse</th>
                                 <th class="px-4 py-3 text-right font-semibold text-gray-700">Stock</th>
+                                <th class="px-4 py-3 text-right font-semibold text-gray-700">Action</th>
                             </tr>
                         </thead>
 
@@ -284,10 +297,23 @@
                                         {{ number_format($stock->quantity, 2, ',', '.') }}
                                         {{ $stock->product->unit?->abbreviation }}
                                     </td>
+
+                                    <td class="px-4 py-3 text-right">
+                                        <button type="button"
+                                                class="owner-low-stock-detail rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                                data-product="{{ e($stock->product->name) }}"
+                                                data-sku="{{ e($stock->product->sku) }}"
+                                                data-warehouse="{{ e($stock->warehouse->name) }}"
+                                                data-quantity="{{ number_format($stock->quantity, 2, ',', '.') }}"
+                                                data-unit="{{ e($stock->product->unit?->abbreviation ?? '') }}"
+                                                data-alert="{{ number_format($stock->product->stock_alert_level, 2, ',', '.') }}">
+                                            Detail
+                                        </button>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="px-4 py-8 text-center text-gray-500">
+                                    <td colspan="4" class="px-4 py-8 text-center text-gray-500">
                                         Tidak ada stok menipis.
                                     </td>
                                 </tr>
@@ -313,6 +339,7 @@
                             <th class="px-4 py-3 text-left font-semibold text-gray-700">Cashier</th>
                             <th class="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
                             <th class="px-4 py-3 text-right font-semibold text-gray-700">Total</th>
+                            <th class="px-4 py-3 text-right font-semibold text-gray-700">Action</th>
                         </tr>
                     </thead>
 
@@ -338,10 +365,30 @@
                                 <td class="px-4 py-3 text-right font-semibold text-gray-900">
                                     Rp {{ number_format($sale->total_amount, 0, ',', '.') }}
                                 </td>
+
+                                <td class="px-4 py-3">
+                                    <div class="flex justify-end gap-2">
+                                        <button type="button"
+                                                class="owner-sale-copy rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                                data-invoice="{{ e($sale->invoice_number) }}">
+                                            Copy
+                                        </button>
+
+                                        <button type="button"
+                                                class="owner-sale-detail rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                                data-invoice="{{ e($sale->invoice_number) }}"
+                                                data-date="{{ e($sale->sold_at?->format('d M Y H:i') ?? '-') }}"
+                                                data-cashier="{{ e($sale->cashier->name) }}"
+                                                data-status="{{ e(str_replace('_', ' ', ucfirst($sale->status))) }}"
+                                                data-total="Rp {{ number_format($sale->total_amount, 0, ',', '.') }}">
+                                            Detail
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
                                     Belum ada transaksi.
                                 </td>
                             </tr>
@@ -351,4 +398,139 @@
             </div>
         </div>
     </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const summary = {
+            netSalesToday: @json('Rp ' . number_format($netSalesToday, 0, ',', '.')),
+            grossProfitToday: @json('Rp ' . number_format($grossProfitToday, 0, ',', '.')),
+            transactionCountToday: @json(number_format($transactionCountToday, 0, ',', '.')),
+            purchaseTotalToday: @json('Rp ' . number_format($purchaseTotalToday, 0, ',', '.')),
+            lowStockCount: @json(number_format($lowStockCount, 0, ',', '.')),
+        };
+
+        function showToast(icon, title) {
+            if (window.Toast) {
+                Toast.fire({ icon, title });
+                return;
+            }
+
+            if (window.Swal) {
+                Swal.fire({ icon, title, timer: 2200, showConfirmButton: false });
+            }
+        }
+
+        function copyText(text, successMessage) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(function () {
+                    showToast('success', successMessage);
+                });
+                return;
+            }
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+            showToast('success', successMessage);
+        }
+
+        @if ($lowStockCount > 0)
+            showToast('warning', 'Ada {{ number_format($lowStockCount, 0, ',', '.') }} item stok menipis.');
+        @endif
+
+        document.getElementById('ownerDashboardSummaryButton')?.addEventListener('click', function () {
+            if (!window.Swal) {
+                return;
+            }
+
+            Swal.fire({
+                icon: 'info',
+                title: 'Owner Dashboard Summary',
+                html: `
+                    <div class="text-left text-sm">
+                        <div class="flex justify-between gap-6 border-b py-2"><span>Net Sales Today</span><strong>${summary.netSalesToday}</strong></div>
+                        <div class="flex justify-between gap-6 border-b py-2"><span>Gross Profit Today</span><strong>${summary.grossProfitToday}</strong></div>
+                        <div class="flex justify-between gap-6 border-b py-2"><span>Transactions Today</span><strong>${summary.transactionCountToday}</strong></div>
+                        <div class="flex justify-between gap-6 border-b py-2"><span>Purchases Today</span><strong>${summary.purchaseTotalToday}</strong></div>
+                        <div class="flex justify-between gap-6 py-2"><span>Low Stock</span><strong>${summary.lowStockCount}</strong></div>
+                    </div>
+                `,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#111827'
+            });
+        });
+
+        document.getElementById('copyOwnerDashboardSummaryButton')?.addEventListener('click', function () {
+            const text = [
+                'Owner Dashboard Summary',
+                `Net Sales Today: ${summary.netSalesToday}`,
+                `Gross Profit Today: ${summary.grossProfitToday}`,
+                `Transactions Today: ${summary.transactionCountToday}`,
+                `Purchases Today: ${summary.purchaseTotalToday}`,
+                `Low Stock: ${summary.lowStockCount}`,
+            ].join('\n');
+
+            copyText(text, 'Summary dashboard berhasil disalin.');
+        });
+
+        document.querySelectorAll('.owner-low-stock-detail').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (!window.Swal) {
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Low Stock Detail',
+                    html: `
+                        <div class="text-left text-sm">
+                            <div class="flex justify-between gap-6 border-b py-2"><span>Product</span><strong>${button.dataset.product}</strong></div>
+                            <div class="flex justify-between gap-6 border-b py-2"><span>SKU</span><strong>${button.dataset.sku}</strong></div>
+                            <div class="flex justify-between gap-6 border-b py-2"><span>Warehouse</span><strong>${button.dataset.warehouse}</strong></div>
+                            <div class="flex justify-between gap-6 border-b py-2"><span>Current Stock</span><strong>${button.dataset.quantity} ${button.dataset.unit}</strong></div>
+                            <div class="flex justify-between gap-6 py-2"><span>Alert Level</span><strong>${button.dataset.alert} ${button.dataset.unit}</strong></div>
+                        </div>
+                    `,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#111827'
+                });
+            });
+        });
+
+        document.querySelectorAll('.owner-sale-copy').forEach(function (button) {
+            button.addEventListener('click', function () {
+                copyText(button.dataset.invoice, 'Invoice berhasil disalin.');
+            });
+        });
+
+        document.querySelectorAll('.owner-sale-detail').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (!window.Swal) {
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'info',
+                    title: button.dataset.invoice,
+                    html: `
+                        <div class="text-left text-sm">
+                            <div class="flex justify-between gap-6 border-b py-2"><span>Date</span><strong>${button.dataset.date}</strong></div>
+                            <div class="flex justify-between gap-6 border-b py-2"><span>Cashier</span><strong>${button.dataset.cashier}</strong></div>
+                            <div class="flex justify-between gap-6 border-b py-2"><span>Status</span><strong>${button.dataset.status}</strong></div>
+                            <div class="flex justify-between gap-6 py-2"><span>Total</span><strong>${button.dataset.total}</strong></div>
+                        </div>
+                    `,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#111827'
+                });
+            });
+        });
+    });
+</script>
+
 </x-layouts.app>

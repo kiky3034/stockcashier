@@ -12,6 +12,13 @@
                 </div>
 
                 <div class="flex gap-2">
+                    <button type="button"
+                            id="copyRefundNumberButton"
+                            data-refund-number="{{ $refund->refund_number }}"
+                            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        Copy Number
+                    </button>
+
                     <a href="{{ route('cashier.sales.show', $refund->sale) }}"
                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                         Back to Invoice
@@ -23,13 +30,6 @@
                     </a>
                 </div>
             </div>
-
-            @if (session('success'))
-                <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             <div class="grid gap-4 md:grid-cols-4">
                 <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                     <div class="text-sm text-gray-500">Refund Date</div>
@@ -127,4 +127,41 @@
             @endif
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const copyButton = document.getElementById('copyRefundNumberButton');
+
+            function notifyToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon,
+                        title,
+                        showConfirmButton: false,
+                        timer: 2200,
+                        timerProgressBar: true
+                    });
+                }
+            }
+
+            if (copyButton) {
+                copyButton.addEventListener('click', async function () {
+                    const refundNumber = copyButton.dataset.refundNumber;
+
+                    try {
+                        await navigator.clipboard.writeText(refundNumber);
+                        notifyToast('success', 'Refund number berhasil disalin.');
+                    } catch (error) {
+                        notifyToast('error', 'Gagal menyalin refund number.');
+                    }
+                });
+            }
+        });
+    </script>
 </x-layouts.app>

@@ -14,18 +14,6 @@
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if (session('error'))
-            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {{ session('error') }}
-            </div>
-        @endif
-
         <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 p-4">
                 <form method="GET" action="{{ route('admin.products.index') }}" class="flex gap-3">
@@ -155,7 +143,11 @@
 
                                         <form method="POST"
                                               action="{{ route('admin.products.destroy', $product) }}"
-                                              onsubmit="return confirm('Yakin ingin menghapus product ini?')">
+                                              data-confirm-submit
+                                              data-confirm-title="Hapus produk?"
+                                              data-confirm-text="Produk {{ $product->name }} akan dihapus jika belum memiliki stok, transaksi, atau stock movement."
+                                              data-confirm-button="Ya, hapus"
+                                              data-confirm-icon="warning">
                                             @csrf
                                             @method('DELETE')
 

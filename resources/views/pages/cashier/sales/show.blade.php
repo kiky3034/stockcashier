@@ -11,10 +11,19 @@
                     </p>
                 </div>
 
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
+                    <button type="button"
+                            id="copyInvoiceButton"
+                            data-invoice="{{ $sale->invoice_number }}"
+                            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        Copy Invoice
+                    </button>
+
                     <a href="{{ route('cashier.sales.receipt', $sale) }}"
-                    target="_blank"
-                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                       target="_blank"
+                       id="printReceiptLink"
+                       data-invoice="{{ $sale->invoice_number }}"
+                       class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                         Print Receipt
                     </a>
 
@@ -36,12 +45,6 @@
                     </a>
                 </div>
             </div>
-
-            @if (session('success'))
-                <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                    {{ session('success') }}
-                </div>
-            @endif
 
             <div class="grid gap-4 md:grid-cols-3">
                 <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -203,7 +206,11 @@
                     <form method="POST"
                           action="{{ route('cashier.sales.void', $sale) }}"
                           class="mt-4 space-y-3"
-                          onsubmit="return confirm('Yakin ingin void transaksi ini? Stok akan dikembalikan.')">
+                          data-confirm-submit
+                          data-confirm-title="Void transaksi?"
+                          data-confirm-text="Transaksi {{ $sale->invoice_number }} akan dibatalkan dan stok produk akan dikembalikan."
+                          data-confirm-button="Ya, void transaksi"
+                          data-confirm-icon="warning">
                         @csrf
                         @method('PATCH')
 
@@ -295,4 +302,45 @@
             @endif
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function notifyToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({ icon, title, timer: 1800, showConfirmButton: false });
+                }
+            }
+
+            const copyInvoiceButton = document.getElementById('copyInvoiceButton');
+
+            if (copyInvoiceButton) {
+                copyInvoiceButton.addEventListener('click', function () {
+                    const invoice = copyInvoiceButton.dataset.invoice || '';
+
+                    if (!invoice) {
+                        notifyToast('error', 'Invoice tidak ditemukan');
+                        return;
+                    }
+
+                    navigator.clipboard.writeText(invoice).then(function () {
+                        notifyToast('success', 'Invoice berhasil disalin');
+                    }).catch(function () {
+                        notifyToast('error', 'Gagal menyalin invoice');
+                    });
+                });
+            }
+
+            const printReceiptLink = document.getElementById('printReceiptLink');
+
+            if (printReceiptLink) {
+                printReceiptLink.addEventListener('click', function () {
+                    notifyToast('info', 'Membuka receipt untuk invoice ' + (printReceiptLink.dataset.invoice || ''));
+                });
+            }
+        });
+    </script>
 </x-layouts.app>

@@ -211,5 +211,41 @@
             </main>
         </div>
     </div>
+    <x-sweet-alert />
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-confirm-submit]').forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+
+                    const title = form.dataset.confirmTitle || 'Apakah kamu yakin?';
+                    const text = form.dataset.confirmText || 'Aksi ini tidak bisa dibatalkan.';
+                    const confirmButtonText = form.dataset.confirmButton || 'Ya, lanjutkan';
+                    const icon = form.dataset.confirmIcon || 'warning';
+
+                    Swal.fire({
+                        title: title,
+                        text: text,
+                        icon: icon,
+                        showCancelButton: true,
+                        confirmButtonText: confirmButtonText,
+                        cancelButtonText: 'Batal',
+                        reverseButtons: true,
+                        confirmButtonColor: '#111827',
+                        cancelButtonColor: '#6b7280'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+        
+        Toast.fire({
+        icon: 'success',
+        title: 'Produk berhasil ditambahkan'
+        });
+    </script>
 </body>
 </html>

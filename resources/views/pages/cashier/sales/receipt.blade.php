@@ -58,9 +58,17 @@
 
 <body class="bg-gray-100 text-gray-900">
     <div class="no-print mx-auto my-6 flex max-w-sm justify-center gap-2">
-        <button onclick="window.print()"
+        <button type="button"
+                id="manualPrintButton"
                 class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
             Print
+        </button>
+
+        <button type="button"
+                id="copyReceiptInvoiceButton"
+                data-invoice="{{ $sale->invoice_number }}"
+                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+            Copy Invoice
         </button>
 
         <a href="{{ route('cashier.sales.show', $sale) }}"
@@ -219,13 +227,57 @@
             <p class="mt-1">Barang yang sudah dibeli tidak dapat dikembalikan tanpa struk.</p>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function notifyToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
 
-    @if ($autoPrint)
-        <script>
-            window.addEventListener('load', function () {
-                window.print();
-            });
-        </script>
-    @endif
+                if (window.Swal) {
+                    Swal.fire({ icon, title, timer: 1800, showConfirmButton: false });
+                }
+            }
+
+            function printReceipt() {
+                notifyToast('info', 'Membuka dialog print receipt');
+                setTimeout(function () {
+                    window.print();
+                }, 250);
+            }
+
+            const manualPrintButton = document.getElementById('manualPrintButton');
+
+            if (manualPrintButton) {
+                manualPrintButton.addEventListener('click', printReceipt);
+            }
+
+            const copyButton = document.getElementById('copyReceiptInvoiceButton');
+
+            if (copyButton) {
+                copyButton.addEventListener('click', function () {
+                    const invoice = copyButton.dataset.invoice || '';
+
+                    if (!invoice) {
+                        notifyToast('error', 'Invoice tidak ditemukan');
+                        return;
+                    }
+
+                    navigator.clipboard.writeText(invoice).then(function () {
+                        notifyToast('success', 'Invoice berhasil disalin');
+                    }).catch(function () {
+                        notifyToast('error', 'Gagal menyalin invoice');
+                    });
+                });
+            }
+
+            @if ($autoPrint)
+                window.addEventListener('load', function () {
+                    printReceipt();
+                });
+            @endif
+        });
+    </script>
 </body>
 </html>

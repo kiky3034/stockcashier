@@ -187,6 +187,7 @@
                                 <th class="px-4 py-3 text-left font-semibold text-gray-700">Product</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-700">Type</th>
                                 <th class="px-4 py-3 text-right font-semibold text-gray-700">Change</th>
+                                <th class="px-4 py-3 text-right font-semibold text-gray-700">Action</th>
                             </tr>
                         </thead>
 
@@ -209,10 +210,26 @@
                                     <td class="px-4 py-3 text-right font-semibold {{ $movement->quantity_change >= 0 ? 'text-green-700' : 'text-red-700' }}">
                                         {{ $movement->quantity_change >= 0 ? '+' : '' }}{{ number_format($movement->quantity_change, 2, ',', '.') }}
                                     </td>
+
+                                    <td class="px-4 py-3 text-right">
+                                        <button type="button"
+                                                class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                                data-stock-movement-detail
+                                                data-product="{{ e($movement->product?->name ?? '-') }}"
+                                                data-warehouse="{{ e($movement->warehouse?->name ?? '-') }}"
+                                                data-user="{{ e($movement->user?->name ?? '-') }}"
+                                                data-type="{{ e(str_replace('_', ' ', ucwords($movement->type, '_'))) }}"
+                                                data-before="{{ e(number_format($movement->quantity_before, 2, ',', '.')) }}"
+                                                data-change="{{ e(($movement->quantity_change >= 0 ? '+' : '') . number_format($movement->quantity_change, 2, ',', '.')) }}"
+                                                data-after="{{ e(number_format($movement->quantity_after, 2, ',', '.')) }}"
+                                                data-notes="{{ e($movement->notes ?? '-') }}">
+                                            Detail
+                                        </button>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="px-4 py-8 text-center text-gray-500">
+                                    <td colspan="4" class="px-4 py-8 text-center text-gray-500">
                                         Belum ada stock movement.
                                     </td>
                                 </tr>
@@ -244,6 +261,17 @@
                                         {{ $activity->user?->name ?? 'System' }} · {{ $activity->created_at->format('d M Y H:i') }}
                                     </div>
                                 </div>
+
+                                <button type="button"
+                                        class="shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                        data-activity-detail
+                                        data-event="{{ e(str_replace('_', ' ', ucwords($activity->event, '_'))) }}"
+                                        data-description="{{ e($activity->description ?? '-') }}"
+                                        data-user="{{ e($activity->user?->name ?? 'System') }}"
+                                        data-date="{{ e($activity->created_at->format('d M Y H:i')) }}"
+                                        data-properties="{{ base64_encode(json_encode($activity->properties ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) }}">
+                                    Detail
+                                </button>
                             </div>
                         </div>
                     @empty
@@ -255,4 +283,101 @@
             </div>
         </div>
     </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const toast = window.Toast || null;
+                const swal = window.Swal || null;
+
+                function notify(options) {
+                    if (toast) {
+                        toast.fire(options);
+                        return;
+                    }
+
+                    if (swal) {
+                        swal.fire({
+                            icon: options.icon || 'info',
+                            title: options.title || '',
+                            text: options.text || '',
+                            timer: 2500,
+                            showConfirmButton: false
+                        });
+                    }
+                }
+
+                const lowStockCount = @json((int) $lowStockCount);
+
+                if (lowStockCount > 0) {
+                    notify({
+                        icon: 'warning',
+                        title: `${lowStockCount} item low stock perlu dicek`
+                    });
+                }
+
+                document.querySelectorAll('[data-stock-movement-detail]').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        const html = `
+                            <div class="space-y-2 text-left text-sm">
+                                <div><strong>Product:</strong> ${button.dataset.product}</div>
+                                <div><strong>Warehouse:</strong> ${button.dataset.warehouse}</div>
+                                <div><strong>User:</strong> ${button.dataset.user}</div>
+                                <div><strong>Type:</strong> ${button.dataset.type}</div>
+                                <hr>
+                                <div><strong>Before:</strong> ${button.dataset.before}</div>
+                                <div><strong>Change:</strong> ${button.dataset.change}</div>
+                                <div><strong>After:</strong> ${button.dataset.after}</div>
+                                <hr>
+                                <div><strong>Notes:</strong> ${button.dataset.notes}</div>
+                            </div>
+                        `;
+
+                        if (swal) {
+                            swal.fire({
+                                icon: 'info',
+                                title: 'Stock Movement Detail',
+                                html: html,
+                                confirmButtonText: 'Tutup',
+                                confirmButtonColor: '#111827'
+                            });
+                        }
+                    });
+                });
+
+                document.querySelectorAll('[data-activity-detail]').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        let properties = {};
+
+                        try {
+                            properties = JSON.parse(atob(button.dataset.properties || 'e30='));
+                        } catch (error) {
+                            properties = {};
+                        }
+
+                        const propertiesHtml = Object.keys(properties).length
+                            ? `<pre class="mt-3 max-h-72 overflow-auto rounded-lg bg-gray-100 p-3 text-left text-xs">${JSON.stringify(properties, null, 2)}</pre>`
+                            : `<div class="mt-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-500">Tidak ada properties tambahan.</div>`;
+
+                        if (swal) {
+                            swal.fire({
+                                icon: 'info',
+                                title: button.dataset.event,
+                                html: `
+                                    <div class="space-y-2 text-left text-sm">
+                                        <div><strong>Description:</strong> ${button.dataset.description}</div>
+                                        <div><strong>User:</strong> ${button.dataset.user}</div>
+                                        <div><strong>Date:</strong> ${button.dataset.date}</div>
+                                        ${propertiesHtml}
+                                    </div>
+                                `,
+                                width: 700,
+                                confirmButtonText: 'Tutup',
+                                confirmButtonColor: '#111827'
+                            });
+                        }
+                    });
+                });
+            });
+        </script>
+
 </x-layouts.app>

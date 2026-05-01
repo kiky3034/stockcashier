@@ -86,13 +86,12 @@
                                     <div>{{ $log->description ?? '-' }}</div>
 
                                     @if ($log->properties)
-                                        <details class="mt-2">
-                                            <summary class="cursor-pointer text-xs font-semibold text-gray-500">
-                                                View properties
-                                            </summary>
-
-                                            <pre class="mt-2 max-w-lg overflow-x-auto rounded-lg bg-gray-50 p-3 text-xs text-gray-700">{{ json_encode($log->properties, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
-                                        </details>
+                                        <button type="button"
+                                                data-activity-properties="{{ base64_encode(json_encode($log->properties, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) }}"
+                                                data-activity-event="{{ str_replace('_', ' ', ucwords($log->event, '_')) }}"
+                                                class="mt-2 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                            View properties
+                                        </button>
                                     @endif
                                 </td>
 
@@ -125,4 +124,47 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function escapeHtml(value) {
+                return String(value ?? '')
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            document.querySelectorAll('[data-activity-properties]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const eventName = button.dataset.activityEvent || 'Activity';
+                    const encodedProperties = button.dataset.activityProperties || '';
+                    let properties = '-';
+
+                    try {
+                        properties = atob(encodedProperties);
+                    } catch (error) {
+                        properties = 'Properties tidak bisa ditampilkan.';
+                    }
+
+                    Swal.fire({
+                        title: escapeHtml(eventName),
+                        html: `
+                            <div style="text-align:left">
+                                <div style="margin-bottom:10px;color:#6b7280;font-size:13px">
+                                    Detail properties activity log.
+                                </div>
+                                <pre style="max-height:420px;overflow:auto;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:12px;font-size:12px;line-height:1.5;color:#374151;white-space:pre-wrap">${escapeHtml(properties)}</pre>
+                            </div>
+                        `,
+                        width: '56rem',
+                        confirmButtonText: 'Tutup',
+                        confirmButtonColor: '#111827'
+                    });
+                });
+            });
+        });
+    </script>
+
 </x-layouts.app>

@@ -8,8 +8,19 @@
                 </p>
             </div>
 
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
+                <button type="button"
+                        data-copy-report-summary
+                        data-copy-title="Ringkasan stok disalin"
+                        data-summary="Stock Report | Total Quantity: {{ number_format($totalQuantity, 2, ',', '.') }} | Inventory Value: Rp {{ number_format($totalStockValue, 0, ',', '.') }} | Low Stock Items: {{ number_format($lowStockCount, 0, ',', '.') }}"
+                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                    Copy Summary
+                </button>
+
                 <a href="{{ route('owner.reports.stock.export', request()->query()) }}"
+                   data-export-confirm
+                   data-export-title="Export stock report?"
+                   data-export-text="Stock report sesuai filter saat ini akan didownload sebagai CSV."
                    class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
                     Export CSV
                 </a>
@@ -108,6 +119,10 @@
                                     <div class="mt-1 text-xs text-gray-500">
                                         SKU: {{ $stock->product->sku }}
                                     </div>
+
+                                    <div class="mt-1 text-xs text-gray-500">
+                                        Barcode: {{ $stock->product->barcode ?? '-' }}
+                                    </div>
                                 </td>
 
                                 <td class="px-4 py-3 text-gray-600">
@@ -159,4 +174,97 @@
             </div>
         </div>
     </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const lowStockCount = Number(@json($lowStockCount));
+
+        if (lowStockCount > 0 && window.Toast) {
+            Toast.fire({
+                icon: 'warning',
+                title: `${lowStockCount} item low stock`
+            });
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const reportToast = window.Toast || {
+            fire: function (options) {
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2500,
+                        timerProgressBar: true,
+                        ...options
+                    });
+                }
+            }
+        };
+
+        document.querySelectorAll('[data-export-confirm]').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                if (!window.Swal) {
+                    window.location.href = link.href;
+                    return;
+                }
+
+                Swal.fire({
+                    title: link.dataset.exportTitle || 'Export CSV?',
+                    text: link.dataset.exportText || 'Data sesuai filter saat ini akan didownload.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, export',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    confirmButtonColor: '#111827',
+                    cancelButtonColor: '#6b7280'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        reportToast.fire({
+                            icon: 'info',
+                            title: 'Menyiapkan file CSV...'
+                        });
+
+                        window.location.href = link.href;
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll('[data-copy-report-summary]').forEach(function (button) {
+            button.addEventListener('click', async function () {
+                try {
+                    await navigator.clipboard.writeText(button.dataset.summary || '');
+
+                    reportToast.fire({
+                        icon: 'success',
+                        title: button.dataset.copyTitle || 'Ringkasan disalin'
+                    });
+                } catch (error) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal menyalin',
+                            text: 'Clipboard tidak tersedia di browser ini.'
+                        });
+                    }
+                }
+            });
+        });
+
+        @if (request()->query())
+            reportToast.fire({
+                icon: 'info',
+                title: 'Filter laporan diterapkan'
+            });
+        @endif
+    });
+</script>
+
 </x-layouts.app>

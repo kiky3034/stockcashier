@@ -14,11 +14,6 @@
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                {{ session('success') }}
-            </div>
-        @endif
 
         <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 p-4">
@@ -80,8 +75,15 @@
                     <tbody class="divide-y divide-gray-200 bg-white">
                         @forelse ($purchases as $purchase)
                             <tr>
-                                <td class="px-4 py-3 font-medium text-gray-900">
-                                    {{ $purchase->purchase_number }}
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-medium text-gray-900">{{ $purchase->purchase_number }}</span>
+                                        <button type="button"
+                                                class="text-xs font-semibold text-gray-500 hover:text-gray-900"
+                                                data-copy-text="{{ $purchase->purchase_number }}">
+                                            Copy
+                                        </button>
+                                    </div>
                                 </td>
 
                                 <td class="px-4 py-3 text-gray-600">
@@ -127,4 +129,38 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function showToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon: icon, title: title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: icon,
+                        title: title,
+                        timer: 1800,
+                        showConfirmButton: false
+                    });
+                }
+            }
+
+            document.querySelectorAll('[data-copy-text]').forEach(function (button) {
+                button.addEventListener('click', async function () {
+                    const text = button.dataset.copyText || '';
+
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        showToast('success', 'Purchase number disalin.');
+                    } catch (error) {
+                        showToast('error', 'Gagal menyalin purchase number.');
+                    }
+                });
+            });
+        });
+    </script>
+
 </x-layouts.app>

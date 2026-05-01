@@ -220,6 +220,44 @@
             }).format(value || 0);
         }
 
+
+        function notifyToast(icon, title) {
+            if (window.Toast) {
+                Toast.fire({ icon, title });
+                return;
+            }
+
+            if (window.Swal) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: icon,
+                    title: title,
+                    showConfirmButton: false,
+                    timer: 2200,
+                    timerProgressBar: true
+                });
+                return;
+            }
+
+            console.log(title);
+        }
+
+        function notifyAlert(icon, title, text = '') {
+            if (window.Swal) {
+                Swal.fire({
+                    icon: icon,
+                    title: title,
+                    text: text,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#111827'
+                });
+                return;
+            }
+
+            alert(text || title);
+        }
+
         function selectedWarehouseId() {
             return String(warehouseId.value);
         }
@@ -292,12 +330,12 @@
             const product = products.find(product => product.id === productId);
 
             if (!product) {
-                alert('Produk tidak ditemukan.');
+                notifyAlert('error', 'Produk tidak ditemukan', 'Produk tidak ada dalam daftar POS.');
                 return;
             }
 
             if (!canAddProduct(product, quantityToAdd)) {
-                alert(`Stok ${product.name} tidak mencukupi di warehouse ini.`);
+                notifyAlert('warning', 'Stok tidak mencukupi', `Stok ${product.name} tidak mencukupi di warehouse ini.`);
                 return;
             }
 
@@ -319,6 +357,7 @@
 
             renderCart();
             renderProducts();
+            notifyToast('success', `${product.name} ditambahkan ke cart.`);
         }
 
         function updateQuantity(productId, quantity) {
@@ -337,7 +376,7 @@
             }
 
             if (isStockTracked(product) && newQuantity > getProductStock(product)) {
-                alert(`Qty melebihi stok. Stok tersedia: ${getProductStock(product)} ${product.unit ?? ''}`);
+                notifyAlert('warning', 'Qty melebihi stok', `Stok tersedia: ${getProductStock(product)} ${product.unit ?? ''}`);
                 item.quantity = getProductStock(product);
             } else {
                 item.quantity = newQuantity;
@@ -370,9 +409,14 @@
         }
 
         function removeFromCart(productId) {
+            const item = cart.find(item => item.id === productId);
             cart = cart.filter(item => item.id !== productId);
             renderCart();
             renderProducts();
+
+            if (item) {
+                notifyToast('info', `${item.name} dihapus dari cart.`);
+            }
         }
 
         function calculateSubtotal() {
@@ -475,7 +519,7 @@
             });
 
             if (!product) {
-                alert('Produk dengan barcode/SKU tersebut tidak ditemukan.');
+                notifyAlert('error', 'Produk tidak ditemukan', 'Barcode atau SKU tidak cocok dengan data produk.');
                 barcodeInput.select();
                 return;
             }
@@ -487,7 +531,7 @@
 
         function validateCartBeforeSubmit() {
             if (cart.length === 0) {
-                alert('Cart masih kosong.');
+                notifyToast('warning', 'Cart masih kosong.');
                 return false;
             }
 
@@ -495,12 +539,12 @@
                 const product = products.find(product => product.id === item.id);
 
                 if (!product) {
-                    alert(`Produk ${item.name} tidak valid.`);
+                    notifyAlert('error', 'Produk tidak valid', `Produk ${item.name} tidak valid.`);
                     return false;
                 }
 
                 if (isStockTracked(product) && Number(item.quantity) > getProductStock(product)) {
-                    alert(`Qty ${product.name} melebihi stok warehouse. Stok tersedia: ${getProductStock(product)} ${product.unit ?? ''}`);
+                    notifyAlert('warning', 'Qty melebihi stok warehouse', `Qty ${product.name} melebihi stok warehouse. Stok tersedia: ${getProductStock(product)} ${product.unit ?? ''}`);
                     return false;
                 }
             }
@@ -509,7 +553,7 @@
             const paid = Number(paidAmount.value || 0);
 
             if (paid < total) {
-                alert('Nominal bayar kurang dari total transaksi.');
+                notifyAlert('warning', 'Pembayaran kurang', 'Nominal bayar kurang dari total transaksi.');
                 paidAmount.focus();
                 return false;
             }
@@ -522,6 +566,7 @@
             renderProducts();
             renderCart();
             barcodeInput.focus();
+            notifyToast('info', 'Warehouse diganti, cart dikosongkan.');
         });
 
         barcodeInput.addEventListener('keydown', function (event) {
@@ -541,6 +586,7 @@
             renderCart();
             paidAmount.focus();
             paidAmount.select();
+            notifyToast('success', 'Nominal bayar diisi pas.');
         });
 
         posForm.addEventListener('submit', function (event) {

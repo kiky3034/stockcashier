@@ -9,7 +9,14 @@
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.categories.update', $category) }}" class="space-y-5">
+                <form method="POST"
+                      action="{{ route('admin.categories.update', $category) }}"
+                      class="space-y-5"
+                      data-confirm-submit
+                      data-confirm-title="Update category?"
+                      data-confirm-text="Perubahan pada category {{ $category->name }} akan disimpan."
+                      data-confirm-button="Ya, update"
+                      data-confirm-icon="question">
                     @csrf
                     @method('PUT')
 

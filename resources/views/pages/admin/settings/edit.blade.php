@@ -7,11 +7,17 @@
                     Atur profil toko dan informasi struk.
                 </p>
             </div>
-
-            <x-flash-message />
-
-            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data" class="space-y-5">
+<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <form method="POST"
+                      action="{{ route('admin.settings.update') }}"
+                      enctype="multipart/form-data"
+                      id="settingsForm"
+                      class="space-y-5"
+                      data-confirm-submit
+                      data-confirm-title="Simpan settings?"
+                      data-confirm-text="Profil toko dan pengaturan struk akan diperbarui."
+                      data-confirm-button="Ya, simpan settings"
+                      data-confirm-icon="question">
                     @csrf
                     @method('PUT')
 
@@ -208,4 +214,38 @@
             </div>
         </div>
     </div>
-</x-layouts.app>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const logoInput = document.getElementById('store_logo');
+
+            function showToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({ icon, title, timer: 2200, showConfirmButton: false });
+                }
+            }
+
+            if (logoInput) {
+                logoInput.addEventListener('change', function () {
+                    const file = logoInput.files?.[0];
+
+                    if (!file) {
+                        return;
+                    }
+
+                    const sizeInMb = file.size / 1024 / 1024;
+
+                    if (sizeInMb > 2) {
+                        showToast('warning', 'Ukuran logo lebih dari 2MB. Upload mungkin ditolak.');
+                        return;
+                    }
+
+                    showToast('info', `Logo dipilih: ${file.name}`);
+                });
+            }
+        });
+    </script></x-layouts.app>

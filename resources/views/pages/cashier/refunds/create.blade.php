@@ -23,7 +23,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('cashier.sales.refunds.store', $sale) }}" class="space-y-6">
+            <form method="POST" action="{{ route('cashier.sales.refunds.store', $sale) }}" id="refundForm" class="space-y-6">
                 @csrf
 
                 <div class="grid gap-4 md:grid-cols-3">
@@ -177,8 +177,7 @@
                             </a>
 
                             <button type="submit"
-                                    class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
-                                    onclick="return confirm('Yakin ingin menyimpan refund ini? Stok akan dikembalikan.')">
+                                    class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
                                 Save Refund
                             </button>
                         </div>
@@ -191,6 +190,26 @@
     <script>
         const qtyInputs = document.querySelectorAll('.refund-qty');
         const refundTotalText = document.getElementById('refundTotalText');
+        const refundForm = document.getElementById('refundForm');
+
+        function notifyToast(icon, title) {
+            if (window.Toast) {
+                Toast.fire({ icon, title });
+                return;
+            }
+
+            if (window.Swal) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon,
+                    title,
+                    showConfirmButton: false,
+                    timer: 2200,
+                    timerProgressBar: true
+                });
+            }
+        }
 
         function formatRupiah(value) {
             return new Intl.NumberFormat('id-ID', {
@@ -210,16 +229,51 @@
 
                 if (quantity > max) {
                     input.value = max;
+                    notifyToast('warning', 'Qty refund disesuaikan dengan batas tersedia.');
                 }
 
                 total += Number(input.value || 0) * price;
             });
 
             refundTotalText.textContent = formatRupiah(total);
+
+            return total;
         }
 
         qtyInputs.forEach(input => {
             input.addEventListener('input', calculateRefundTotal);
+        });
+
+        refundForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const total = calculateRefundTotal();
+
+            if (total <= 0) {
+                notifyToast('warning', 'Isi minimal satu qty refund lebih dari 0.');
+                return;
+            }
+
+            if (!window.Swal) {
+                refundForm.submit();
+                return;
+            }
+
+            Swal.fire({
+                title: 'Simpan refund?',
+                text: 'Refund akan disimpan dan stok produk akan dikembalikan.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, simpan refund',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                confirmButtonColor: '#111827',
+                cancelButtonColor: '#6b7280'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    refundForm.submit();
+                }
+            });
         });
 
         calculateRefundTotal();

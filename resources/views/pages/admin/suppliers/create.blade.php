@@ -9,7 +9,14 @@
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.suppliers.store') }}" class="space-y-5">
+                <form method="POST"
+                      action="{{ route('admin.suppliers.store') }}"
+                      class="space-y-5"
+                      data-confirm-submit
+                      data-confirm-title="Simpan supplier baru?"
+                      data-confirm-text="Supplier baru akan ditambahkan ke master data."
+                      data-confirm-button="Ya, simpan"
+                      data-confirm-icon="question">
                     @csrf
 
                     <div>
@@ -78,8 +85,10 @@
 
                     <label class="flex items-center gap-2">
                         <input type="checkbox"
+                               id="is_active"
                                name="is_active"
                                value="1"
+                               data-supplier-active
                                class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                                @checked(old('is_active', true))>
 
@@ -105,4 +114,40 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const activeInput = document.querySelector('[data-supplier-active]');
+            const phoneInput = document.getElementById('phone');
+            const emailInput = document.getElementById('email');
+
+            function showToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({ icon, title, timer: 1800, showConfirmButton: false });
+                }
+            }
+
+            activeInput?.addEventListener('change', function () {
+                showToast(
+                    this.checked ? 'info' : 'warning',
+                    this.checked ? 'Supplier akan dibuat aktif.' : 'Supplier akan dibuat nonaktif.'
+                );
+            });
+
+            phoneInput?.addEventListener('input', function () {
+                this.value = this.value.replace(/[^0-9+\-\s()]/g, '');
+            });
+
+            emailInput?.addEventListener('blur', function () {
+                if (this.value && !this.checkValidity()) {
+                    showToast('warning', 'Format email supplier belum valid.');
+                }
+            });
+        });
+    </script>
 </x-layouts.app>

@@ -9,7 +9,14 @@
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.categories.store') }}" class="space-y-5">
+                <form method="POST"
+                      action="{{ route('admin.categories.store') }}"
+                      class="space-y-5"
+                      data-confirm-submit
+                      data-confirm-title="Simpan category?"
+                      data-confirm-text="Category baru akan ditambahkan ke master data."
+                      data-confirm-button="Ya, simpan"
+                      data-confirm-icon="question">
                     @csrf
 
                     <div>

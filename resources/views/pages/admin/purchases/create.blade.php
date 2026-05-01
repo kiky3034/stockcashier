@@ -15,13 +15,16 @@
                 </a>
             </div>
 
-            @if ($errors->any())
-                <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {{ $errors->first() }}
-                </div>
-            @endif
 
-            <form method="POST" action="{{ route('admin.purchases.store') }}" class="space-y-6">
+            <form method="POST"
+                  action="{{ route('admin.purchases.store') }}"
+                  id="purchaseForm"
+                  class="space-y-6"
+                  data-confirm-submit
+                  data-confirm-title="Simpan purchase?"
+                  data-confirm-text="Purchase akan disimpan dan stok produk akan bertambah sesuai quantity yang diisi."
+                  data-confirm-button="Ya, simpan purchase"
+                  data-confirm-icon="question">
                 @csrf
 
                 <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -33,6 +36,7 @@
 
                             <select id="supplier_id"
                                     name="supplier_id"
+                                    required
                                     class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
                                 <option value="">- Select Supplier -</option>
                                 @foreach ($suppliers as $supplier)
@@ -54,6 +58,7 @@
 
                             <select id="warehouse_id"
                                     name="warehouse_id"
+                                    required
                                     class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
                                 <option value="">- Select Warehouse -</option>
                                 @foreach ($warehouses as $warehouse)
@@ -281,6 +286,46 @@
             taxText.textContent = formatRupiah(tax);
             totalText.textContent = formatRupiah(total);
         }
+
+        function showToast(icon, title) {
+            if (window.Toast) {
+                Toast.fire({
+                    icon: icon,
+                    title: title
+                });
+
+                return;
+            }
+
+            if (window.Swal) {
+                Swal.fire({
+                    icon: icon,
+                    title: title,
+                    timer: 2200,
+                    showConfirmButton: false
+                });
+            }
+        }
+
+        function selectedItemCount() {
+            return Array.from(quantityInputs).filter(input => Number(input.value || 0) > 0).length;
+        }
+
+        const purchaseForm = document.getElementById('purchaseForm');
+
+        purchaseForm.addEventListener('submit', function (event) {
+            if (selectedItemCount() === 0) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                showToast('warning', 'Isi minimal 1 produk dengan quantity lebih dari 0.');
+
+                const firstQuantityInput = document.querySelector('.purchase-quantity');
+                firstQuantityInput?.focus();
+
+                return false;
+            }
+        });
 
         quantityInputs.forEach(input => input.addEventListener('input', calculateTotal));
         costInputs.forEach(input => input.addEventListener('input', calculateTotal));

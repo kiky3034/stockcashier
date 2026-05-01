@@ -8,8 +8,6 @@
                 </p>
             </div>
 
-            <x-flash-message />
-
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                 <h2 class="font-semibold text-gray-900">Database Backup</h2>
 
@@ -20,8 +18,8 @@
 
                 <div class="mt-5">
                     <a href="{{ route('admin.backups.database') }}"
-                       class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
-                       onclick="return confirm('Download backup database sekarang?')">
+                       id="downloadBackupButton"
+                       class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
                         Download Database Backup
                     </a>
                 </div>
@@ -33,4 +31,34 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const button = document.getElementById('downloadBackupButton');
+
+            if (!button) {
+                return;
+            }
+
+            button.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                Swal.fire({
+                    title: 'Download backup?',
+                    text: 'File SQL database akan didownload. Simpan file ini di tempat aman.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, download',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    confirmButtonColor: '#111827',
+                    cancelButtonColor: '#6b7280'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = button.href;
+                    }
+                });
+            });
+        });
+    </script>
 </x-layouts.app>

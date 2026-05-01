@@ -13,13 +13,6 @@
                 + Stock Adjustment
             </a>
         </div>
-
-        @if (session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                {{ session('success') }}
-            </div>
-        @endif
-
         <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 p-4">
                 <form method="GET" action="{{ route('admin.stock-movements.index') }}" class="grid gap-3 md:grid-cols-4">
@@ -75,6 +68,7 @@
                             <th class="px-4 py-3 text-right font-semibold text-gray-700">Change</th>
                             <th class="px-4 py-3 text-right font-semibold text-gray-700">After</th>
                             <th class="px-4 py-3 text-left font-semibold text-gray-700">User</th>
+                            <th class="px-4 py-3 text-right font-semibold text-gray-700">Action</th>
                         </tr>
                     </thead>
 
@@ -133,10 +127,33 @@
                                 <td class="px-4 py-3 text-gray-600">
                                     {{ $movement->user?->name ?? '-' }}
                                 </td>
+
+                                @php
+                                    $movementDetail = [
+                                        'date' => $movement->created_at->format('d M Y H:i'),
+                                        'product' => $movement->product->name,
+                                        'sku' => $movement->product->sku,
+                                        'warehouse' => $movement->warehouse->name,
+                                        'type' => str_replace('_', ' ', ucwords($movement->type, '_')),
+                                        'before' => number_format($movement->quantity_before, 2, ',', '.'),
+                                        'change' => ($movement->quantity_change > 0 ? '+' : '') . number_format($movement->quantity_change, 2, ',', '.'),
+                                        'after' => number_format($movement->quantity_after, 2, ',', '.'),
+                                        'user' => $movement->user?->name ?? '-',
+                                        'notes' => $movement->notes ?? '-',
+                                    ];
+                                @endphp
+
+                                <td class="px-4 py-3 text-right">
+                                    <button type="button"
+                                            data-movement-detail="{{ base64_encode(json_encode($movementDetail, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) }}"
+                                            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                        Detail
+                                    </button>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
                                     Belum ada stock movement.
                                 </td>
                             </tr>
@@ -150,4 +167,52 @@
             </div>
         </div>
     </div>
-</x-layouts.app>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function escapeHtml(value) {
+                return String(value ?? '')
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            document.querySelectorAll('[data-movement-detail]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const detail = JSON.parse(atob(button.dataset.movementDetail));
+
+                    if (!window.Swal) {
+                        alert(`${detail.product} - ${detail.type}`);
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Stock Movement Detail',
+                        html: `
+                            <div class="text-left text-sm">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                                    <div class="text-gray-500">Date</div><div class="font-semibold text-gray-900">${escapeHtml(detail.date)}</div>
+                                    <div class="text-gray-500">Product</div><div class="font-semibold text-gray-900">${escapeHtml(detail.product)}</div>
+                                    <div class="text-gray-500">SKU</div><div class="font-mono text-gray-900">${escapeHtml(detail.sku)}</div>
+                                    <div class="text-gray-500">Warehouse</div><div class="font-semibold text-gray-900">${escapeHtml(detail.warehouse)}</div>
+                                    <div class="text-gray-500">Type</div><div class="font-semibold text-gray-900">${escapeHtml(detail.type)}</div>
+                                    <div class="text-gray-500">Before</div><div class="text-right font-semibold text-gray-900">${escapeHtml(detail.before)}</div>
+                                    <div class="text-gray-500">Change</div><div class="text-right font-semibold text-gray-900">${escapeHtml(detail.change)}</div>
+                                    <div class="text-gray-500">After</div><div class="text-right font-semibold text-gray-900">${escapeHtml(detail.after)}</div>
+                                    <div class="text-gray-500">User</div><div class="font-semibold text-gray-900">${escapeHtml(detail.user)}</div>
+                                </div>
+                                <div class="mt-4 rounded-lg bg-gray-50 p-3">
+                                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Notes</div>
+                                    <div class="mt-1 text-gray-700">${escapeHtml(detail.notes)}</div>
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonText: 'Tutup',
+                        confirmButtonColor: '#111827',
+                        width: 560
+                    });
+                });
+            });
+        });
+    </script></x-layouts.app>

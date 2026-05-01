@@ -9,7 +9,15 @@
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.stock-adjustments.store') }}" class="space-y-5">
+                <form method="POST"
+                      action="{{ route('admin.stock-adjustments.store') }}"
+                      id="stockAdjustmentForm"
+                      class="space-y-5"
+                      data-confirm-submit
+                      data-confirm-title="Simpan stock adjustment?"
+                      data-confirm-text="Perubahan stok akan langsung disimpan dan tercatat di stock movements."
+                      data-confirm-button="Ya, simpan adjustment"
+                      data-confirm-icon="question">
                     @csrf
 
                     <div>
@@ -18,6 +26,7 @@
                         </label>
                         <select id="product_id"
                                 name="product_id"
+                                required
                                 class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
                             <option value="">- Select Product -</option>
                             @foreach ($products as $product)
@@ -38,6 +47,7 @@
                         </label>
                         <select id="warehouse_id"
                                 name="warehouse_id"
+                                required
                                 class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
                             <option value="">- Select Warehouse -</option>
                             @foreach ($warehouses as $warehouse)
@@ -58,6 +68,7 @@
                         </label>
                         <select id="direction"
                                 name="direction"
+                                required
                                 class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
                             <option value="in" @selected(old('direction') === 'in')>Stock In / Tambah Stok</option>
                             <option value="out" @selected(old('direction') === 'out')>Stock Out / Kurangi Stok</option>
@@ -76,6 +87,7 @@
                                id="quantity"
                                name="quantity"
                                value="{{ old('quantity') }}"
+                               required
                                min="0.01"
                                step="0.01"
                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
@@ -115,4 +127,31 @@
             </div>
         </div>
     </div>
-</x-layouts.app>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const direction = document.getElementById('direction');
+
+            function showToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({ icon, title, timer: 2200, showConfirmButton: false });
+                }
+            }
+
+            if (direction) {
+                direction.addEventListener('change', function () {
+                    if (direction.value === 'out') {
+                        showToast('warning', 'Pastikan stok mencukupi sebelum stock out.');
+                    }
+
+                    if (direction.value === 'in') {
+                        showToast('info', 'Stock in akan menambah stok warehouse yang dipilih.');
+                    }
+                });
+            }
+        });
+    </script></x-layouts.app>

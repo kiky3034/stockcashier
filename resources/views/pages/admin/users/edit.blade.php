@@ -9,7 +9,14 @@
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.users.update', $user) }}" class="space-y-5">
+                <form method="POST"
+                      action="{{ route('admin.users.update', $user) }}"
+                      class="space-y-5"
+                      data-confirm-submit
+                      data-confirm-title="Update user?"
+                      data-confirm-text="Data user {{ $user->email }} akan diperbarui."
+                      data-confirm-button="Ya, update"
+                      data-confirm-icon="question">
                     @csrf
                     @method('PUT')
 
@@ -19,6 +26,7 @@
                                id="name"
                                name="name"
                                value="{{ old('name', $user->name) }}"
+                               required
                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900"
                                autofocus>
 
@@ -33,6 +41,7 @@
                                id="email"
                                name="email"
                                value="{{ old('email', $user->email) }}"
+                               required
                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
 
                         @error('email')
@@ -47,8 +56,13 @@
                         <input type="password"
                                id="password"
                                name="password"
+                               minlength="8"
                                placeholder="Kosongkan jika tidak ingin ganti password"
                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
+
+                        <p class="mt-1 text-xs text-gray-500">
+                            Kosongkan jika tidak ingin mengganti password. Jika diisi, minimal 8 karakter.
+                        </p>
 
                         @error('password')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -59,6 +73,7 @@
                         <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
                         <select id="role"
                                 name="role"
+                                required
                                 class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
                             <option value="">- Select Role -</option>
                             @foreach ($roles as $role)
@@ -88,4 +103,45 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const roleSelect = document.getElementById('role');
+
+            function showToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({ icon, title, timer: 1800, showConfirmButton: false });
+                }
+            }
+
+            emailInput?.addEventListener('blur', function () {
+                if (emailInput.value && !emailInput.checkValidity()) {
+                    showToast('warning', 'Format email belum valid');
+                }
+            });
+
+            passwordInput?.addEventListener('blur', function () {
+                if (passwordInput.value && passwordInput.value.length < 8) {
+                    showToast('warning', 'Password baru minimal 8 karakter');
+                }
+
+                if (passwordInput.value.length >= 8) {
+                    showToast('info', 'Password user akan diganti saat update');
+                }
+            });
+
+            roleSelect?.addEventListener('change', function () {
+                if (roleSelect.value) {
+                    showToast('info', `Role dipilih: ${roleSelect.value}`);
+                }
+            });
+        });
+    </script>
 </x-layouts.app>

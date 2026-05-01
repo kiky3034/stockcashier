@@ -9,7 +9,14 @@
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.units.update', $unit) }}" class="space-y-5">
+                <form method="POST"
+                      action="{{ route('admin.units.update', $unit) }}"
+                      class="space-y-5"
+                      data-confirm-submit
+                      data-confirm-title="Update unit?"
+                      data-confirm-text="Perubahan pada unit {{ $unit->name }} akan disimpan."
+                      data-confirm-button="Ya, update unit"
+                      data-confirm-icon="question">
                     @csrf
                     @method('PUT')
 
@@ -46,6 +53,7 @@
 
                     <label class="flex items-center gap-2">
                         <input type="checkbox"
+                               id="unitActiveToggle"
                                name="is_active"
                                value="1"
                                class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
@@ -73,4 +81,30 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const activeToggle = document.getElementById('unitActiveToggle');
+
+            function showToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({ icon, title, timer: 1800, showConfirmButton: false });
+                }
+            }
+
+            if (activeToggle) {
+                activeToggle.addEventListener('change', function () {
+                    showToast(
+                        this.checked ? 'info' : 'warning',
+                        this.checked ? 'Unit akan aktif setelah diupdate.' : 'Unit akan nonaktif setelah diupdate.'
+                    );
+                });
+            }
+        });
+    </script>
 </x-layouts.app>

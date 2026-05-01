@@ -14,18 +14,6 @@
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if (session('error'))
-            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {{ session('error') }}
-            </div>
-        @endif
-
         <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 p-4">
                 <form method="GET" action="{{ route('admin.units.index') }}" class="flex gap-3">
@@ -70,7 +58,17 @@
                                 </td>
 
                                 <td class="px-4 py-3 text-gray-600">
-                                    {{ $unit->abbreviation }}
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono rounded bg-gray-50 px-2 py-1 text-xs font-semibold text-gray-700">
+                                            {{ $unit->abbreviation }}
+                                        </span>
+
+                                        <button type="button"
+                                                class="copy-unit-abbreviation rounded-lg border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                                data-abbreviation="{{ $unit->abbreviation }}">
+                                            Copy
+                                        </button>
+                                    </div>
                                 </td>
 
                                 <td class="px-4 py-3">
@@ -87,6 +85,15 @@
 
                                 <td class="px-4 py-3">
                                     <div class="flex justify-end gap-2">
+                                        <button type="button"
+                                                class="show-unit-detail rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                                data-name="{{ $unit->name }}"
+                                                data-abbreviation="{{ $unit->abbreviation }}"
+                                                data-status="{{ $unit->is_active ? 'Active' : 'Inactive' }}"
+                                                data-created="{{ $unit->created_at?->format('d M Y H:i') }}">
+                                            Detail
+                                        </button>
+
                                         <a href="{{ route('admin.units.edit', $unit) }}"
                                            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
                                             Edit
@@ -94,7 +101,11 @@
 
                                         <form method="POST"
                                               action="{{ route('admin.units.destroy', $unit) }}"
-                                              onsubmit="return confirm('Yakin ingin menghapus unit ini?')">
+                                              data-confirm-submit
+                                              data-confirm-title="Hapus unit?"
+                                              data-confirm-text="Unit {{ $unit->name }} akan dihapus jika belum digunakan pada produk."
+                                              data-confirm-button="Ya, hapus"
+                                              data-confirm-icon="warning">
                                             @csrf
                                             @method('DELETE')
 
@@ -122,4 +133,88 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const showToast = (options) => {
+                if (window.Toast) {
+                    window.Toast.fire(options);
+                    return;
+                }
+
+                if (window.Swal) {
+                    window.Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2500,
+                        timerProgressBar: true,
+                        ...options,
+                    });
+                }
+            };
+
+            document.querySelectorAll('.copy-unit-abbreviation').forEach(function (button) {
+                button.addEventListener('click', async function () {
+                    const abbreviation = button.dataset.abbreviation || '';
+
+                    try {
+                        await navigator.clipboard.writeText(abbreviation);
+
+                        showToast({
+                            icon: 'success',
+                            title: `Abbreviation ${abbreviation} disalin`,
+                        });
+                    } catch (error) {
+                        if (window.Swal) {
+                            window.Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal menyalin',
+                                text: 'Browser tidak mengizinkan akses clipboard.',
+                            });
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll('.show-unit-detail').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const name = button.dataset.name || '-';
+                    const abbreviation = button.dataset.abbreviation || '-';
+                    const status = button.dataset.status || '-';
+                    const created = button.dataset.created || '-';
+
+                    if (!window.Swal) {
+                        return;
+                    }
+
+                    window.Swal.fire({
+                        title: 'Detail Unit',
+                        html: `
+                            <div class="text-left text-sm">
+                                <div class="mb-2 flex justify-between gap-4">
+                                    <span class="text-gray-500">Name</span>
+                                    <span class="font-semibold text-gray-900">${name}</span>
+                                </div>
+                                <div class="mb-2 flex justify-between gap-4">
+                                    <span class="text-gray-500">Abbreviation</span>
+                                    <span class="font-mono font-semibold text-gray-900">${abbreviation}</span>
+                                </div>
+                                <div class="mb-2 flex justify-between gap-4">
+                                    <span class="text-gray-500">Status</span>
+                                    <span class="font-semibold text-gray-900">${status}</span>
+                                </div>
+                                <div class="flex justify-between gap-4">
+                                    <span class="text-gray-500">Created</span>
+                                    <span class="font-semibold text-gray-900">${created}</span>
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonText: 'Tutup',
+                        confirmButtonColor: '#111827',
+                    });
+                });
+            });
+        });
+    </script>
 </x-layouts.app>

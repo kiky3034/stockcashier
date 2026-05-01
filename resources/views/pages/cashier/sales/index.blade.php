@@ -14,12 +14,6 @@
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                {{ session('success') }}
-            </div>
-        @endif
-
         <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 p-4">
                 <form method="GET" action="{{ route('cashier.sales.index') }}" class="flex gap-3">
@@ -106,14 +100,21 @@
 
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex justify-end gap-2">
+                                        <button type="button"
+                                                class="copy-invoice-button rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                                data-invoice="{{ $sale->invoice_number }}">
+                                            Copy
+                                        </button>
+
                                         <a href="{{ route('cashier.sales.receipt', $sale) }}"
-                                        target="_blank"
-                                        class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                           target="_blank"
+                                           class="print-receipt-link rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                           data-invoice="{{ $sale->invoice_number }}">
                                             Print
                                         </a>
 
                                         <a href="{{ route('cashier.sales.show', $sale) }}"
-                                        class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                           class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
                                             Detail
                                         </a>
                                     </div>
@@ -135,4 +136,41 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function notifyToast(icon, title) {
+                if (window.Toast) {
+                    Toast.fire({ icon, title });
+                    return;
+                }
+
+                if (window.Swal) {
+                    Swal.fire({ icon, title, timer: 1800, showConfirmButton: false });
+                }
+            }
+
+            document.querySelectorAll('.copy-invoice-button').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const invoice = button.dataset.invoice || '';
+
+                    if (!invoice) {
+                        notifyToast('error', 'Invoice tidak ditemukan');
+                        return;
+                    }
+
+                    navigator.clipboard.writeText(invoice).then(function () {
+                        notifyToast('success', 'Invoice berhasil disalin');
+                    }).catch(function () {
+                        notifyToast('error', 'Gagal menyalin invoice');
+                    });
+                });
+            });
+
+            document.querySelectorAll('.print-receipt-link').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    notifyToast('info', 'Membuka receipt untuk invoice ' + (link.dataset.invoice || ''));
+                });
+            });
+        });
+    </script>
 </x-layouts.app>

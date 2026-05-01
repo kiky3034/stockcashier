@@ -9,7 +9,15 @@
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data" class="space-y-6">
+                <form method="POST"
+                      action="{{ route('admin.products.store') }}"
+                      enctype="multipart/form-data"
+                      class="space-y-6"
+                      data-confirm-submit
+                      data-confirm-title="Simpan produk baru?"
+                      data-confirm-text="Produk akan ditambahkan beserta stok awal per warehouse."
+                      data-confirm-button="Ya, simpan"
+                      data-confirm-icon="question">
                     @csrf
 
                     <div class="grid gap-5 md:grid-cols-2">
