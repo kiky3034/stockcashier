@@ -12,11 +12,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use App\Models\SaleRefund;
 use App\Models\SaleRefundItem;
+use App\Services\ActivityLogService;
 
 class SaleService
 {
     public function __construct(
         private readonly StockService $stockService,
+        private readonly ActivityLogService $activityLog,
     ) {
     }
 
@@ -150,6 +152,38 @@ class SaleService
                 'paid_at' => now(),
             ]);
 
+            $this->activityLog->log(
+                event: 'sale_created',
+                description: 'Sale dibuat: ' . $sale->invoice_number,
+                subject: $sale,
+                properties: [
+                    'invoice_number' => $sale->invoice_number,
+                    'cashier_id' => $cashier->id,
+                    'cashier_name' => $cashier->name,
+                    'warehouse_id' => $warehouse->id,
+                    'warehouse_name' => $warehouse->name,
+                    'subtotal' => $sale->subtotal,
+                    'discount_amount' => $sale->discount_amount,
+                    'tax_amount' => $sale->tax_amount,
+                    'total_amount' => $sale->total_amount,
+                    'paid_amount' => $sale->paid_amount,
+                    'change_amount' => $sale->change_amount,
+                    'payment_method' => $data['payment_method'],
+                    'items' => collect($preparedItems)->map(function ($item) {
+                        return [
+                            'product_id' => $item['product']->id,
+                            'product_name' => $item['product']->name,
+                            'sku' => $item['product']->sku,
+                            'quantity' => $item['quantity'],
+                            'unit_price' => $item['unit_price'],
+                            'cost_price' => $item['cost_price'],
+                            'subtotal' => $item['subtotal'],
+                        ];
+                    })->values()->all(),
+                ],
+                user: $cashier,
+            );
+
             return $sale->load(['items', 'payments', 'cashier', 'warehouse']);
         });
     }
@@ -253,6 +287,26 @@ class SaleService
                 'status' => 'voided',
                 'notes' => trim(($sale->notes ? $sale->notes . "\n" : '') . $voidNote),
             ]);
+
+            $this->activityLog->log(
+                event: 'sale_voided',
+                description: 'Sale di-void: ' . $sale->invoice_number,
+                subject: $sale,
+                properties: [
+                    'invoice_number' => $sale->invoice_number,
+                    'reason' => $reason,
+                    'total_amount' => $sale->total_amount,
+                    'items' => $sale->items->map(function ($item) {
+                        return [
+                            'product_id' => $item->product_id,
+                            'product_name' => $item->product_name,
+                            'sku' => $item->sku,
+                            'quantity_restored' => $item->quantity,
+                        ];
+                    })->values()->all(),
+                ],
+                user: $user,
+            );
 
             return $sale->load(['items', 'payments', 'cashier', 'warehouse']);
         });
@@ -384,6 +438,31 @@ class SaleService
             }
 
             $this->updateSaleRefundStatus($sale);
+            $this->activityLog->log(
+                event: 'sale_refunded',
+                description: 'Refund dibuat: ' . $refund->refund_number . ' untuk invoice ' . $sale->invoice_number,
+                subject: $refund,
+                properties: [
+                    'refund_number' => $refund->refund_number,
+                    'invoice_number' => $sale->invoice_number,
+                    'sale_id' => $sale->id,
+                    'method' => $refund->method,
+                    'total_amount' => $refund->total_amount,
+                    'reason' => $refund->reason,
+                    'items' => collect($preparedItems)->map(function ($item) {
+                        return [
+                            'sale_item_id' => $item['sale_item']->id,
+                            'product_id' => $item['product']->id,
+                            'product_name' => $item['sale_item']->product_name,
+                            'sku' => $item['sale_item']->sku,
+                            'quantity_refunded' => $item['quantity'],
+                            'unit_price' => $item['unit_price'],
+                            'subtotal' => $item['subtotal'],
+                        ];
+                    })->values()->all(),
+                ],
+                user: $user,
+            );
 
             return $refund->load(['sale', 'items.product', 'user']);
         });

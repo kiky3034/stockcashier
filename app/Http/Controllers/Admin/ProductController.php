@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use App\Services\ActivityLogService;
 
 class ProductController extends Controller
 {
@@ -52,7 +53,7 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, ActivityLogService $activityLog): RedirectResponse
     {
         $validated = $request->validate([
             'category_id' => ['nullable', 'exists:categories,id'],
@@ -75,7 +76,7 @@ class ProductController extends Controller
             'stocks.*' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        DB::transaction(function () use ($request, $validated) {
+        DB::transaction(function () use ($request, $validated, $activityLog) {
             $trackStock = $request->boolean('track_stock');
 
             $product = Product::create([
@@ -119,6 +120,21 @@ class ProductController extends Controller
                     ]);
                 }
             }
+
+            $activityLog->log(
+                event: 'product_created',
+                description: 'Product dibuat: ' . $product->name,
+                subject: $product,
+                properties: [
+                    'sku' => $product->sku,
+                    'barcode' => $product->barcode,
+                    'cost_price' => $product->cost_price,
+                    'selling_price' => $product->selling_price,
+                    'track_stock' => $product->track_stock,
+                    'initial_stocks' => $stockInputs,
+                ],
+                user: $request->user(),
+            );
         });
 
         return redirect()
@@ -140,7 +156,7 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(Request $request, Product $product): RedirectResponse
+    public function update(Request $request, Product $product, ActivityLogService $activityLog): RedirectResponse
     {
         $validated = $request->validate([
             'category_id' => ['nullable', 'exists:categories,id'],
@@ -173,7 +189,18 @@ class ProductController extends Controller
             'stocks.*' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        DB::transaction(function () use ($request, $validated, $product) {
+        $oldData = [
+            'name' => $product->name,
+            'sku' => $product->sku,
+            'barcode' => $product->barcode,
+            'cost_price' => $product->cost_price,
+            'selling_price' => $product->selling_price,
+            'stock_alert_level' => $product->stock_alert_level,
+            'track_stock' => $product->track_stock,
+            'is_active' => $product->is_active,
+        ];
+
+        DB::transaction(function () use ($request, $validated, $product, $oldData, $activityLog) {
             $trackStock = $request->boolean('track_stock');
 
             $product->update([
@@ -206,6 +233,27 @@ class ProductController extends Controller
                     ]
                 );
             }
+
+            $activityLog->log(
+                event: 'product_updated',
+                description: 'Product diperbarui: ' . $product->name,
+                subject: $product,
+                properties: [
+                    'old' => $oldData,
+                    'new' => [
+                        'name' => $product->name,
+                        'sku' => $product->sku,
+                        'barcode' => $product->barcode,
+                        'cost_price' => $product->cost_price,
+                        'selling_price' => $product->selling_price,
+                        'stock_alert_level' => $product->stock_alert_level,
+                        'track_stock' => $product->track_stock,
+                        'is_active' => $product->is_active,
+                    ],
+                    'stocks' => $stockInputs,
+                ],
+                user: $request->user(),
+            );
         });
 
         return redirect()
@@ -213,7 +261,7 @@ class ProductController extends Controller
             ->with('success', 'Product berhasil diperbarui.');
     }
 
-    public function destroy(Product $product): RedirectResponse
+    public function destroy(Request $request, Product $product, ActivityLogService $activityLog): RedirectResponse
     {
         if ($product->stocks()->where('quantity', '>', 0)->exists()) {
             return redirect()
@@ -221,7 +269,38 @@ class ProductController extends Controller
                 ->with('error', 'Product tidak bisa dihapus karena masih memiliki stok.');
         }
 
+        if ($product->stockMovements()->exists()) {
+            return redirect()
+                ->route('admin.products.index')
+                ->with('error', 'Product tidak bisa dihapus karena sudah memiliki riwayat stock movement.');
+        }
+
+        if ($product->saleItems()->exists() || $product->purchaseItems()->exists()) {
+            return redirect()
+                ->route('admin.products.index')
+                ->with('error', 'Product tidak bisa dihapus karena sudah digunakan dalam transaksi.');
+        }
+
+        $deletedProduct = [
+            'id' => $product->id,
+            'name' => $product->name,
+            'sku' => $product->sku,
+            'barcode' => $product->barcode,
+            'cost_price' => $product->cost_price,
+            'selling_price' => $product->selling_price,
+        ];
+
         $product->delete();
+
+        $activityLog->log(
+            event: 'product_deleted',
+            description: 'Product dihapus: ' . $deletedProduct['name'],
+            subject: null,
+            properties: [
+                'deleted_product' => $deletedProduct,
+            ],
+            user: $request->user(),
+        );
 
         return redirect()
             ->route('admin.products.index')

@@ -9,6 +9,7 @@ use App\Services\StockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Services\ActivityLogService;
 
 class StockAdjustmentController extends Controller
 {
@@ -25,7 +26,7 @@ class StockAdjustmentController extends Controller
         ]);
     }
 
-    public function store(Request $request, StockService $stockService): RedirectResponse
+    public function store(Request $request, StockService $stockService, ActivityLogService $activityLog): RedirectResponse
     {
         $validated = $request->validate([
             'product_id' => ['required', 'exists:products,id'],
@@ -39,7 +40,7 @@ class StockAdjustmentController extends Controller
         $warehouse = Warehouse::findOrFail($validated['warehouse_id']);
 
         if ($validated['direction'] === 'in') {
-            $stockService->increase(
+            $movement = $stockService->increase(
                 product: $product,
                 warehouse: $warehouse,
                 quantity: (float) $validated['quantity'],
@@ -48,7 +49,7 @@ class StockAdjustmentController extends Controller
                 notes: $validated['notes'] ?? null,
             );
         } else {
-            $stockService->decrease(
+            $movement = $stockService->decrease(
                 product: $product,
                 warehouse: $warehouse,
                 quantity: (float) $validated['quantity'],
@@ -57,6 +58,26 @@ class StockAdjustmentController extends Controller
                 notes: $validated['notes'] ?? null,
             );
         }
+
+        $activityLog->log(
+            event: 'stock_adjusted',
+            description: 'Stock adjustment ' . $validated['direction'] . ': ' . $product->name,
+            subject: $movement,
+            properties: [
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'sku' => $product->sku,
+                'warehouse_id' => $warehouse->id,
+                'warehouse_name' => $warehouse->name,
+                'direction' => $validated['direction'],
+                'quantity' => $validated['quantity'],
+                'quantity_before' => $movement->quantity_before,
+                'quantity_change' => $movement->quantity_change,
+                'quantity_after' => $movement->quantity_after,
+                'notes' => $validated['notes'] ?? null,
+            ],
+            user: $request->user(),
+        );
 
         return redirect()
             ->route('admin.stock-movements.index')

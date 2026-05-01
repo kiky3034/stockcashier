@@ -10,11 +10,13 @@ use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use App\Services\ActivityLogService;
 
 class PurchaseService
 {
     public function __construct(
         private readonly StockService $stockService,
+        private readonly ActivityLogService $activityLog,
     ) {
     }
 
@@ -137,6 +139,35 @@ class PurchaseService
                     ]);
                 }
             }
+
+            // ✅ Tambahkan activity log
+            $this->activityLog->log(
+                event: 'purchase_created',
+                description: 'Purchase dibuat: ' . $purchase->purchase_number,
+                subject: $purchase,
+                properties: [
+                    'purchase_number' => $purchase->purchase_number,
+                    'supplier_id' => $supplier->id,
+                    'supplier_name' => $supplier->name,
+                    'warehouse_id' => $warehouse->id,
+                    'warehouse_name' => $warehouse->name,
+                    'subtotal' => $purchase->subtotal,
+                    'discount_amount' => $purchase->discount_amount,
+                    'tax_amount' => $purchase->tax_amount,
+                    'total_amount' => $purchase->total_amount,
+                    'items' => collect($preparedItems)->map(function ($item) {
+                        return [
+                            'product_id' => $item['product']->id,
+                            'product_name' => $item['product']->name,
+                            'sku' => $item['product']->sku,
+                            'quantity' => $item['quantity'],
+                            'unit_cost' => $item['unit_cost'],
+                            'subtotal' => $item['subtotal'],
+                        ];
+                    })->values()->all(),
+                ],
+                user: $user,
+            );
 
             return $purchase->load(['items.product', 'supplier', 'warehouse', 'user']);
         });
