@@ -120,7 +120,7 @@
                         </div>
                     @endif
 
-                    @if ($user?->hasAnyRole(['admin', 'cashier']))
+                    @if ($user?->hasRole('cashier'))
                         <div>
                             <div class="px-3 text-xs font-bold uppercase tracking-wider text-gray-400">
                                 Cashier
@@ -142,7 +142,7 @@
                         </div>
                     @endif
 
-                    @if ($user?->hasAnyRole(['admin', 'owner']))
+                    @if ($user?->hasRole('owner'))
                         <div>
                             <div class="px-3 text-xs font-bold uppercase tracking-wider text-gray-400">
                                 Owner Reports
@@ -240,11 +240,6 @@
                     });
                 });
             });
-        });
-        
-        Toast.fire({
-        icon: 'success',
-        title: 'Produk berhasil ditambahkan'
         });
     </script>
 </body>

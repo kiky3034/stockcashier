@@ -76,9 +76,9 @@
             <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between">
                     <h2 class="font-semibold text-gray-900">Top Products Today</h2>
-                    <a href="{{ route('owner.reports.sales') }}"
+                    <a href="{{ route('admin.products.index') }}"
                        class="text-sm font-semibold text-gray-700 hover:text-gray-900">
-                        View Report
+                        View Products
                     </a>
                 </div>
 

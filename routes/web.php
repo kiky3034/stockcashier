@@ -158,11 +158,11 @@ Route::middleware(['auth', 'role:admin|warehouse staff'])
 
 /*
 |--------------------------------------------------------------------------
-| Cashier + Admin Routes
+| Cashier Routes
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:cashier|admin'])
+Route::middleware(['auth', 'role:cashier'])
     ->prefix('cashier')
     ->name('cashier.')
     ->group(function () {
@@ -202,11 +202,11 @@ Route::middleware(['auth', 'role:cashier|admin'])
 
 /*
 |--------------------------------------------------------------------------
-| Owner + Admin Routes
+| Owner Routes
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:owner|admin'])
+Route::middleware(['auth', 'role:owner'])
     ->prefix('owner')
     ->name('owner.')
     ->group(function () {
@@ -240,11 +240,11 @@ Route::middleware(['auth', 'role:owner|admin'])
 
 /*
 |--------------------------------------------------------------------------
-| Warehouse Staff + Admin Routes
+| Warehouse Staff Routes
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:warehouse staff|admin'])
+Route::middleware(['auth', 'role:warehouse staff'])
     ->prefix('warehouse')
     ->name('warehouse.')
     ->group(function () {

@@ -398,15 +398,21 @@
             </div>
         </div>
     </div>
+@php
+    $ownerDashboardSummary = [
+        'netSalesToday' => 'Rp ' . number_format($netSalesToday, 0, ',', '.'),
+        'grossProfitToday' => 'Rp ' . number_format($grossProfitToday, 0, ',', '.'),
+        'transactionCountToday' => number_format($transactionCountToday, 0, ',', '.'),
+        'purchaseTotalToday' => 'Rp ' . number_format($purchaseTotalToday, 0, ',', '.'),
+        'lowStockCount' => number_format($lowStockCount, 0, ',', '.'),
+    ];
+
+    $ownerLowStockToastMessage = 'Ada ' . number_format($lowStockCount, 0, ',', '.') . ' item stok menipis.';
+@endphp
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const summary = {
-            netSalesToday: @json('Rp ' . number_format($netSalesToday, 0, ',', '.')),
-            grossProfitToday: @json('Rp ' . number_format($grossProfitToday, 0, ',', '.')),
-            transactionCountToday: @json(number_format($transactionCountToday, 0, ',', '.')),
-            purchaseTotalToday: @json('Rp ' . number_format($purchaseTotalToday, 0, ',', '.')),
-            lowStockCount: @json(number_format($lowStockCount, 0, ',', '.')),
-        };
+        const summary = {{ Illuminate\Support\Js::from($ownerDashboardSummary) }};
 
         function showToast(icon, title) {
             if (window.Toast) {
@@ -440,7 +446,7 @@
         }
 
         @if ($lowStockCount > 0)
-            showToast('warning', 'Ada {{ number_format($lowStockCount, 0, ',', '.') }} item stok menipis.');
+            showToast('warning', {{ Illuminate\Support\Js::from($ownerLowStockToastMessage) }});
         @endif
 
         document.getElementById('ownerDashboardSummaryButton')?.addEventListener('click', function () {
