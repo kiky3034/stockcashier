@@ -31,17 +31,29 @@ class LoginController extends Controller
         }
 
         $request->session()->regenerate();
+        
+        $user = $request->user();
+        
         $activityLog->log(
             event: 'user_logged_in',
-            description: 'User login: ' . $request->user()->email,
-            subject: $request->user(),
+            description: 'User login: ' . $user->email,
+            subject: $user,
             properties: [
-                'email' => $request->user()->email,
+                'email' => $user->email,
             ],
-            user: $request->user(),
+            user: $user,
         );
 
-        return redirect()->intended(route('dashboard'));
+        // Tentukan redirect berdasarkan role
+        $redirectUrl = $this->getRedirectUrlByRole($user);
+
+        return redirect()
+            ->to($redirectUrl)
+            ->withHeaders([
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma' => 'no-cache',
+                'Expires' => 'Sat, 01 Jan 2000 00:00:00 GMT',
+            ]);
     }
 
     public function destroy(Request $request, ActivityLogService $activityLog): RedirectResponse
@@ -57,11 +69,42 @@ class LoginController extends Controller
             ],
             user: $user,
         );
+        
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()
+            ->route('login')
+            ->withHeaders([
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma' => 'no-cache',
+                'Expires' => 'Sat, 01 Jan 2000 00:00:00 GMT',
+            ]);
+    }
+
+    /**
+     * Get redirect URL based on user role
+     */
+    protected function getRedirectUrlByRole($user): string
+    {
+        if ($user->hasRole('admin')) {
+            return route('admin.dashboard');
+        }
+        
+        if ($user->hasRole('owner')) {
+            return route('owner.dashboard');
+        }
+        
+        if ($user->hasRole('warehouse staff')) {
+            return route('warehouse.dashboard');
+        }
+        
+        if ($user->hasRole('cashier')) {
+            return route('cashier.dashboard');
+        }
+        
+        return route('dashboard');
     }
 }

@@ -48,31 +48,39 @@ Route::post('/logout', [LoginController::class, 'destroy'])
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated Dashboard Redirect
+| Authenticated Dashboard Redirect (Fallback)
+|--------------------------------------------------------------------------
+| Route ini hanya akan dipanggil jika:
+| 1. Ada yang memanggil route('dashboard') secara manual
+| 2. Redirect dari middleware atau controller yang tidak spesifik
+| 
+| Untuk redirect setelah login, sudah ditangani di LoginController
+| sehingga user tidak akan pernah melewati route ini setelah login.
 |--------------------------------------------------------------------------
 */
 
 Route::get('/dashboard', function () {
     $user = auth()->user();
-
+    
+    // Prioritas: admin > owner > warehouse staff > cashier
     if ($user->hasRole('admin')) {
         return redirect()->route('admin.dashboard');
     }
-
+    
     if ($user->hasRole('owner')) {
         return redirect()->route('owner.dashboard');
     }
-
+    
+    if ($user->hasRole('warehouse staff')) {
+        return redirect()->route('warehouse.dashboard');
+    }
+    
     if ($user->hasRole('cashier')) {
         return redirect()->route('cashier.dashboard');
     }
 
-    if ($user->hasRole('warehouse staff')) {
-        return redirect()->route('warehouse.dashboard');
-    }
-
     abort(403);
-})->middleware('auth')->name('dashboard');
+})->middleware(['auth', 'no-cache'])->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------
@@ -80,7 +88,7 @@ Route::get('/dashboard', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:admin'])
+Route::middleware(['auth', 'no-cache', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -108,11 +116,11 @@ Route::middleware(['auth', 'role:admin'])
 
 /*
 |--------------------------------------------------------------------------
-| Admin + Warehouse Staff Routes
+| Admin + Warehouse Staff Routes (Inventory & Master Data)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:admin|warehouse staff'])
+Route::middleware(['auth', 'no-cache', 'role:admin|warehouse staff'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -162,7 +170,7 @@ Route::middleware(['auth', 'role:admin|warehouse staff'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:cashier'])
+Route::middleware(['auth', 'no-cache', 'role:cashier'])
     ->prefix('cashier')
     ->name('cashier.')
     ->group(function () {
@@ -206,7 +214,7 @@ Route::middleware(['auth', 'role:cashier'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:owner'])
+Route::middleware(['auth', 'no-cache', 'role:owner'])
     ->prefix('owner')
     ->name('owner.')
     ->group(function () {
@@ -244,7 +252,7 @@ Route::middleware(['auth', 'role:owner'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:warehouse staff'])
+Route::middleware(['auth', 'no-cache', 'role:warehouse staff'])
     ->prefix('warehouse')
     ->name('warehouse.')
     ->group(function () {

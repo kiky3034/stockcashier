@@ -5,6 +5,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>{{ $title }} - {{ config('app.name', 'StockCashier') }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -472,6 +475,18 @@
                     });
                 });
             });
+        });
+    </script>
+
+    <script>
+        window.addEventListener('pageshow', function (event) {
+            const navigationEntries = performance.getEntriesByType('navigation');
+            const isBackForwardNavigation = event.persisted
+                || (navigationEntries.length > 0 && navigationEntries[0].type === 'back_forward');
+
+            if (isBackForwardNavigation) {
+                window.location.reload();
+            }
         });
     </script>
 </body>
