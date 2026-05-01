@@ -54,7 +54,7 @@ Route::middleware(['auth'])->group(function () {
         }
 
         abort(403);
-    })->name('dashboard');
+    })->middleware(['auth'])->name('dashboard');
 });
 
 // Route untuk kategori (dapat diakses admin dan warehouse staff)
@@ -87,6 +87,8 @@ Route::middleware(['auth', 'role:cashier|admin'])
     ->prefix('cashier')
     ->name('cashier.')
     ->group(function () {
+        Route::view('/dashboard', 'pages.cashier.dashboard')->name('dashboard');
+
         Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
         Route::post('/pos', [PosController::class, 'store'])->name('pos.store');
 
@@ -112,7 +114,9 @@ Route::middleware(['auth', 'role:admin'])
     ->name('admin.')
     ->group(function () {
         Route::view('/dashboard', 'pages.admin.dashboard')->name('dashboard');
+
         Route::resource('users', UserController::class)->except(['show']);
+
         Route::get('activity-logs', [ActivityLogController::class, 'index'])
             ->name('activity-logs.index');
     });
@@ -144,6 +148,13 @@ Route::middleware(['auth', 'role:cashier'])
     });
 
 Route::middleware(['auth', 'role:warehouse staff'])
+    ->prefix('warehouse')
+    ->name('warehouse.')
+    ->group(function () {
+        Route::view('/dashboard', 'pages.warehouse.dashboard')->name('dashboard');
+    });
+
+Route::middleware(['auth', 'role:warehouse staff|admin'])
     ->prefix('warehouse')
     ->name('warehouse.')
     ->group(function () {
