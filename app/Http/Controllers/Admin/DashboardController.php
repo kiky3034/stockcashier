@@ -10,6 +10,7 @@ use App\Models\Sale;
 use App\Models\SaleRefund;
 use App\Models\Stock;
 use App\Models\StockMovement;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -20,45 +21,46 @@ class DashboardController extends Controller
         $from = now()->startOfDay();
         $to = now()->endOfDay();
 
-        $totalProducts = Product::query()->count();
+        // Cache aggregate counts for 60 seconds
+        $cacheKey = 'admin_dashboard_' . now()->format('Ymd');
 
-        $activeProducts = Product::query()
-            ->where('is_active', true)
-            ->count();
+        $aggregates = Cache::remember($cacheKey, 60, function () use ($from, $to) {
+            $grossSalesToday = Sale::query()
+                ->where('status', '!=', 'voided')
+                ->whereBetween('sold_at', [$from, $to])
+                ->sum('total_amount');
 
-        $lowStockCount = Stock::query()
-            ->join('products', 'stocks.product_id', '=', 'products.id')
-            ->where('products.is_active', true)
-            ->where('products.track_stock', true)
-            ->whereColumn('stocks.quantity', '<=', 'products.stock_alert_level')
-            ->count();
+            $refundToday = SaleRefund::query()
+                ->where('status', 'completed')
+                ->whereBetween('refunded_at', [$from, $to])
+                ->sum('total_amount');
 
-        $inventoryValue = Stock::query()
-            ->join('products', 'stocks.product_id', '=', 'products.id')
-            ->where('products.track_stock', true)
-            ->sum(DB::raw('stocks.quantity * products.cost_price'));
-
-        $grossSalesToday = Sale::query()
-            ->where('status', '!=', 'voided')
-            ->whereBetween('sold_at', [$from, $to])
-            ->sum('total_amount');
-
-        $refundToday = SaleRefund::query()
-            ->where('status', 'completed')
-            ->whereBetween('refunded_at', [$from, $to])
-            ->sum('total_amount');
-
-        $netSalesToday = (float) $grossSalesToday - (float) $refundToday;
-
-        $transactionsToday = Sale::query()
-            ->where('status', '!=', 'voided')
-            ->whereBetween('sold_at', [$from, $to])
-            ->count();
-
-        $purchasesToday = Purchase::query()
-            ->where('status', 'completed')
-            ->whereBetween('purchased_at', [$from, $to])
-            ->sum('total_amount');
+            return [
+                'totalProducts' => Product::query()->count(),
+                'activeProducts' => Product::query()
+                    ->where('is_active', true)
+                    ->count(),
+                'lowStockCount' => Stock::query()
+                    ->join('products', 'stocks.product_id', '=', 'products.id')
+                    ->where('products.is_active', true)
+                    ->where('products.track_stock', true)
+                    ->whereColumn('stocks.quantity', '<=', 'products.stock_alert_level')
+                    ->count(),
+                'inventoryValue' => Stock::query()
+                    ->join('products', 'stocks.product_id', '=', 'products.id')
+                    ->where('products.track_stock', true)
+                    ->sum(DB::raw('stocks.quantity * products.cost_price')),
+                'netSalesToday' => (float) $grossSalesToday - (float) $refundToday,
+                'transactionsToday' => Sale::query()
+                    ->where('status', '!=', 'voided')
+                    ->whereBetween('sold_at', [$from, $to])
+                    ->count(),
+                'purchasesToday' => Purchase::query()
+                    ->where('status', 'completed')
+                    ->whereBetween('purchased_at', [$from, $to])
+                    ->sum('total_amount'),
+            ];
+        });
 
         $recentSales = Sale::query()
             ->with(['cashier', 'warehouse'])
@@ -95,13 +97,13 @@ class DashboardController extends Controller
             ->get();
 
         return view('pages.admin.dashboard', [
-            'totalProducts' => $totalProducts,
-            'activeProducts' => $activeProducts,
-            'lowStockCount' => $lowStockCount,
-            'inventoryValue' => $inventoryValue,
-            'netSalesToday' => $netSalesToday,
-            'transactionsToday' => $transactionsToday,
-            'purchasesToday' => $purchasesToday,
+            'totalProducts' => $aggregates['totalProducts'],
+            'activeProducts' => $aggregates['activeProducts'],
+            'lowStockCount' => $aggregates['lowStockCount'],
+            'inventoryValue' => $aggregates['inventoryValue'],
+            'netSalesToday' => $aggregates['netSalesToday'],
+            'transactionsToday' => $aggregates['transactionsToday'],
+            'purchasesToday' => $aggregates['purchasesToday'],
             'recentSales' => $recentSales,
             'recentStockMovements' => $recentStockMovements,
             'latestActivities' => $latestActivities,
