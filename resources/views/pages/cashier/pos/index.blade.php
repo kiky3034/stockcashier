@@ -391,7 +391,9 @@
                             class="group overflow-hidden rounded-3xl border border-slate-200/80 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md ${isOutOfStock ? 'opacity-60' : ''}">
                         <div class="relative">
                             ${product.image_url
-                                ? `<img src="${escapeHtml(product.image_url)}" class="h-36 w-full object-cover transition duration-300 group-hover:scale-105" alt="${escapeHtml(product.name)}">`
+                                ? `<div class="relative h-36 w-full bg-gradient-to-br from-sky-50 to-cyan-50">
+                                    <img src="${escapeHtml(product.image_url)}" loading="lazy" decoding="async" class="h-36 w-full object-cover transition duration-300 group-hover:scale-105" alt="${escapeHtml(product.name)}" onerror="this.parentElement.innerHTML='<div class=\'flex h-36 w-full items-center justify-center text-xs font-semibold text-sky-300\'>No Image</div>'">
+                                   </div>`
                                 : `<div class="flex h-36 w-full items-center justify-center bg-gradient-to-br from-sky-50 to-cyan-50 text-xs font-semibold text-sky-300">No Image</div>`
                             }
 

@@ -8,9 +8,21 @@
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <meta name="theme-color" content="#0ea5e9">
+    <meta name="description" content="StockCashier — Inventory & Point of Sale System">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <title>{{ $title }} - {{ config('app.name', 'StockCashier') }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+    </script>
 
     <style>
         [x-cloak] {
@@ -233,6 +245,13 @@
                                     <span class="flex items-center gap-3">
                                         <span class="text-base">🛒</span>
                                         <span>Purchases</span>
+                                    </span>
+                                </x-sidebar-link>
+
+                                <x-sidebar-link href="{{ route('admin.barcodes.index') }}" :active="request()->routeIs('admin.barcodes.*')">
+                                    <span class="flex items-center gap-3">
+                                        <span class="text-base">🏷️</span>
+                                        <span>Barcode Generator</span>
                                     </span>
                                 </x-sidebar-link>
                             </div>

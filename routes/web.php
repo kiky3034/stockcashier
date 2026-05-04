@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\AppSettingController;
 use App\Http\Controllers\Admin\BackupController;
+use App\Http\Controllers\Admin\BarcodeController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ProductController;
@@ -189,6 +190,9 @@ Route::middleware(['auth', 'no-cache', 'session-idle-timeout', '2fa', 'role:admi
 
         Route::get('purchases/{purchase}', [PurchaseController::class, 'show'])
             ->name('purchases.show');
+
+        Route::get('barcodes', [BarcodeController::class, 'index'])
+            ->name('barcodes.index');
     });
 
 /*
