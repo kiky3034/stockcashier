@@ -317,6 +317,25 @@
                 </nav>
 
                 @auth
+                    @if ($user?->hasAnyRole(['admin', 'owner']))
+                        <div class="border-t border-sky-100 px-4 py-3">
+                            <div class="px-3 text-[11px] font-black uppercase tracking-[0.18em] text-sky-500">
+                                Security
+                            </div>
+                            <div class="mt-2 space-y-1">
+                                <x-sidebar-link href="{{ route('two-factor.create') }}" :active="request()->routeIs('two-factor.*')">
+                                    <span class="flex items-center gap-3">
+                                        <span class="text-base">🔐</span>
+                                        <span>Two-Factor Auth</span>
+                                        @if ($user->hasTwoFactorEnabled())
+                                            <span class="ml-auto flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                                        @endif
+                                    </span>
+                                </x-sidebar-link>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="border-t border-sky-100 p-4">
                         <form method="POST"
                               action="{{ route('logout') }}"
@@ -489,5 +508,83 @@
             }
         });
     </script>
+
+    {{-- Client-side idle timeout detection --}}
+    @auth
+    <script>
+        (function () {
+            const IDLE_TIMEOUT = {{ (int) config('session.idle_timeout', 15) }} * 60 * 1000; // ms
+            const WARNING_BEFORE = 2 * 60 * 1000; // show warning 2 min before logout
+            let idleTimer = null;
+            let warningTimer = null;
+            let warningShown = false;
+
+            function resetTimers() {
+                if (warningShown) return;
+                clearTimeout(idleTimer);
+                clearTimeout(warningTimer);
+
+                warningTimer = setTimeout(showWarning, IDLE_TIMEOUT - WARNING_BEFORE);
+                idleTimer = setTimeout(doLogout, IDLE_TIMEOUT);
+            }
+
+            function showWarning() {
+                warningShown = true;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Sesi Akan Berakhir',
+                        text: 'Kamu akan otomatis logout dalam 2 menit karena tidak ada aktivitas. Klik tombol di bawah untuk tetap login.',
+                        icon: 'warning',
+                        showCancelButton: false,
+                        confirmButtonText: 'Tetap Login',
+                        confirmButtonColor: '#0284c7',
+                        allowOutsideClick: false,
+                        timer: WARNING_BEFORE,
+                        timerProgressBar: true,
+                    }).then(function (result) {
+                        if (result.isConfirmed) {
+                            warningShown = false;
+                            resetTimers();
+                            // Ping server to refresh session
+                            fetch('{{ route("dashboard") }}', {
+                                method: 'GET',
+                                credentials: 'same-origin',
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                            }).catch(function () {});
+                        } else {
+                            doLogout();
+                        }
+                    });
+                } else {
+                    if (confirm('Sesi akan berakhir dalam 2 menit. Klik OK untuk tetap login.')) {
+                        warningShown = false;
+                        resetTimers();
+                    } else {
+                        doLogout();
+                    }
+                }
+            }
+
+            function doLogout() {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ route("logout") }}';
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = '_token';
+                csrf.value = '{{ csrf_token() }}';
+                form.appendChild(csrf);
+                document.body.appendChild(form);
+                form.submit();
+            }
+
+            ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart', 'click'].forEach(function (evt) {
+                document.addEventListener(evt, resetTimers, { passive: true });
+            });
+
+            resetTimers();
+        })();
+    </script>
+    @endauth
 </body>
 </html>

@@ -38,6 +38,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Session Idle Timeout (Minutes)
+    |--------------------------------------------------------------------------
+    |
+    | This controls how long a user can be idle before being automatically
+    | logged out by the SessionIdleTimeout middleware. This is separate from
+    | the session lifetime and provides an additional security layer,
+    | especially useful for POS terminals and shared devices.
+    |
+    */
+
+    'idle_timeout' => (int) env('SESSION_IDLE_TIMEOUT', 15),
+
+    /*
+    |--------------------------------------------------------------------------
     | Session Encryption
     |--------------------------------------------------------------------------
     |

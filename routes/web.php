@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\WarehouseController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Cashier\PosController;
 use App\Http\Controllers\Cashier\SaleController;
 use App\Http\Controllers\Cashier\SaleRefundController;
@@ -39,12 +40,38 @@ Route::get('/', function () {
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
-    Route::post('/login', [LoginController::class, 'store']);
+    Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:5,1');
 });
 
 Route::post('/logout', [LoginController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
+
+/*
+|--------------------------------------------------------------------------
+| Two-Factor Authentication Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'no-cache'])->group(function () {
+    Route::get('/two-factor/challenge', [TwoFactorController::class, 'challenge'])
+        ->name('two-factor.challenge');
+
+    Route::post('/two-factor/verify', [TwoFactorController::class, 'verify'])
+        ->middleware('throttle:5,1')
+        ->name('two-factor.verify');
+});
+
+Route::middleware(['auth', 'no-cache', '2fa'])->group(function () {
+    Route::get('/two-factor/setup', [TwoFactorController::class, 'create'])
+        ->name('two-factor.create');
+
+    Route::post('/two-factor/setup', [TwoFactorController::class, 'store'])
+        ->name('two-factor.store');
+
+    Route::delete('/two-factor/disable', [TwoFactorController::class, 'destroy'])
+        ->name('two-factor.destroy');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -80,7 +107,7 @@ Route::get('/dashboard', function () {
     }
 
     abort(403);
-})->middleware(['auth', 'no-cache'])->name('dashboard');
+})->middleware(['auth', 'no-cache', 'session-idle-timeout', '2fa'])->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------
@@ -88,7 +115,7 @@ Route::get('/dashboard', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'no-cache', 'role:admin'])
+Route::middleware(['auth', 'no-cache', 'session-idle-timeout', '2fa', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -120,7 +147,7 @@ Route::middleware(['auth', 'no-cache', 'role:admin'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'no-cache', 'role:admin|warehouse staff'])
+Route::middleware(['auth', 'no-cache', 'session-idle-timeout', '2fa', 'role:admin|warehouse staff'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -170,7 +197,7 @@ Route::middleware(['auth', 'no-cache', 'role:admin|warehouse staff'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'no-cache', 'role:cashier'])
+Route::middleware(['auth', 'no-cache', 'session-idle-timeout', '2fa', 'role:cashier'])
     ->prefix('cashier')
     ->name('cashier.')
     ->group(function () {
@@ -181,6 +208,7 @@ Route::middleware(['auth', 'no-cache', 'role:cashier'])
             ->name('pos.index');
 
         Route::post('/pos', [PosController::class, 'store'])
+            ->middleware('throttle:30,1')
             ->name('pos.store');
 
         Route::get('/sales', [SaleController::class, 'index'])
@@ -214,7 +242,7 @@ Route::middleware(['auth', 'no-cache', 'role:cashier'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'no-cache', 'role:owner'])
+Route::middleware(['auth', 'no-cache', 'session-idle-timeout', '2fa', 'role:owner'])
     ->prefix('owner')
     ->name('owner.')
     ->group(function () {
@@ -252,7 +280,7 @@ Route::middleware(['auth', 'no-cache', 'role:owner'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'no-cache', 'role:warehouse staff'])
+Route::middleware(['auth', 'no-cache', 'session-idle-timeout', '2fa', 'role:warehouse staff'])
     ->prefix('warehouse')
     ->name('warehouse.')
     ->group(function () {
