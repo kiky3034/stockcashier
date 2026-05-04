@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreRefundRequest;
 use App\Models\Sale;
 use App\Models\SaleRefund;
 use App\Services\SaleService;
@@ -28,19 +29,13 @@ class SaleRefundController extends Controller
         ]);
     }
 
-    public function store(Sale $sale, Request $request, SaleService $saleService): RedirectResponse
+    public function store(Sale $sale, StoreRefundRequest $request, SaleService $saleService): RedirectResponse
     {
         if ($request->user()->hasRole('cashier') && ! $request->user()->hasRole('admin')) {
             abort_if($sale->cashier_id !== $request->user()->id, 403);
         }
 
-        $validated = $request->validate([
-            'method' => ['required', 'in:cash,transfer,qris,card'],
-            'reason' => ['nullable', 'string', 'max:1000'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.sale_item_id' => ['required', 'exists:sale_items,id'],
-            'items.*.quantity' => ['nullable', 'numeric', 'min:0'],
-        ]);
+        $validated = $request->validated();
 
         $refund = $saleService->refundSale(
             sale: $sale,

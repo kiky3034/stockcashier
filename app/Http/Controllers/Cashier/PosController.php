@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreSaleRequest;
 use App\Models\Product;
 use App\Models\Warehouse;
 use App\Services\SaleService;
@@ -51,22 +52,9 @@ class PosController extends Controller
         ]);
     }
 
-    public function store(Request $request, SaleService $saleService): RedirectResponse
+    public function store(StoreSaleRequest $request, SaleService $saleService): RedirectResponse
     {
-        $validated = $request->validate([
-            'warehouse_id' => ['required', 'exists:warehouses,id'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
-            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
-
-            'discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'tax_amount' => ['nullable', 'numeric', 'min:0'],
-
-            'payment_method' => ['required', 'in:cash,transfer,qris,card'],
-            'paid_amount' => ['required', 'numeric', 'min:0'],
-            'payment_reference' => ['nullable', 'string', 'max:255'],
-            'notes' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         $sale = $saleService->createSale($validated, $request->user());
 

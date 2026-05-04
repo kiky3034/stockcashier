@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StorePurchaseRequest;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
@@ -58,22 +59,9 @@ class PurchaseController extends Controller
         ]);
     }
 
-    public function store(Request $request, PurchaseService $purchaseService): RedirectResponse
+    public function store(StorePurchaseRequest $request, PurchaseService $purchaseService): RedirectResponse
     {
-        $validated = $request->validate([
-            'supplier_id' => ['required', 'exists:suppliers,id'],
-            'warehouse_id' => ['required', 'exists:warehouses,id'],
-
-            'discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'tax_amount' => ['nullable', 'numeric', 'min:0'],
-            'notes' => ['nullable', 'string'],
-            'update_cost_price' => ['nullable', 'boolean'],
-
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
-            'items.*.quantity' => ['nullable', 'numeric', 'min:0'],
-            'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
-        ]);
+        $validated = $request->validated();
 
         $purchase = $purchaseService->createPurchase(
             data: $validated,
