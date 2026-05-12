@@ -64,32 +64,58 @@
         <div class="mb-6">
             <h3 class="text-lg font-bold text-slate-900">Setup Authenticator App</h3>
             <p class="mt-1 text-sm text-slate-500">
-                Gunakan aplikasi authenticator seperti Google Authenticator, Authy, atau 1Password.
+                Gunakan aplikasi seperti Google Authenticator, Authy, atau 1Password untuk scan QR Code di bawah.
             </p>
         </div>
 
         <div class="space-y-5">
-            {{-- Step 1: Copy Secret --}}
+            {{-- Step 1: Scan QR Code --}}
             <div class="rounded-2xl border border-sky-100 bg-sky-50/50 p-5">
                 <div class="flex items-center gap-3">
                     <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-sm font-bold text-white">
                         1
                     </div>
                     <div class="text-sm font-bold text-slate-800">
-                        Buka aplikasi authenticator dan scan QR atau masukkan kode secret ini secara manual:
+                        Scan QR Code ini dengan aplikasi authenticator kamu:
                     </div>
                 </div>
 
-                <div class="mt-4 flex items-center justify-center gap-3">
-                    <div class="rounded-2xl bg-white px-5 py-3 font-mono text-lg font-black tracking-[0.2em] text-sky-700 ring-1 ring-sky-200 shadow-sm select-all">
-                        {{ $secret }}
+                {{-- QR Code Display --}}
+                <div class="mt-4 flex flex-col items-center gap-4">
+                    <div class="rounded-2xl bg-white p-4 ring-1 ring-sky-200 shadow-sm">
+                        <img
+                            src="data:image/svg+xml;base64,{{ $qrCodeSvg }}"
+                            alt="QR Code untuk Two-Factor Authentication"
+                            width="200"
+                            height="200"
+                            class="block"
+                        >
                     </div>
+                    <p class="text-xs text-slate-500 text-center max-w-xs">
+                        Arahkan kamera di aplikasi authenticator ke QR Code di atas.
+                    </p>
                 </div>
 
-                <p class="mt-3 text-center text-xs text-slate-500">
-                    Atau gunakan URL ini di authenticator app:
-                    <span class="block mt-1 break-all font-mono text-[11px] text-slate-400 select-all">{{ $otpauthUrl }}</span>
-                </p>
+                {{-- Manual key fallback (collapsible) --}}
+                <div class="mt-4">
+                    <button
+                        type="button"
+                        id="toggle-manual-key"
+                        class="flex items-center gap-1.5 text-xs font-medium text-sky-600 hover:text-sky-700 transition"
+                    >
+                        <svg id="toggle-chevron" class="h-3.5 w-3.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                        Tidak bisa scan? Masukkan kode manual
+                    </button>
+
+                    <div id="manual-key-panel" class="mt-3 hidden">
+                        <p class="text-xs text-slate-500 mb-2">Masukkan kode berikut secara manual di aplikasi authenticator:</p>
+                        <div class="rounded-xl bg-white px-4 py-2.5 font-mono text-sm font-bold tracking-[0.2em] text-sky-700 ring-1 ring-sky-200 shadow-sm select-all text-center break-all">
+                            {{ $secret }}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {{-- Step 2: Enter Code --}}
@@ -116,6 +142,7 @@
                         <input
                             type="text"
                             name="code"
+                            id="otp-code"
                             required
                             autofocus
                             autocomplete="one-time-code"
@@ -136,4 +163,20 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('toggle-manual-key');
+            const panel = document.getElementById('manual-key-panel');
+            const chevron = document.getElementById('toggle-chevron');
+
+            if (btn && panel && chevron) {
+                btn.addEventListener('click', function () {
+                    const isHidden = panel.classList.contains('hidden');
+                    panel.classList.toggle('hidden', !isHidden);
+                    chevron.style.transform = isHidden ? 'rotate(90deg)' : '';
+                });
+            }
+        });
+    </script>
 </x-layouts.app>
